@@ -125,6 +125,14 @@
 
     <!-- =================MAIN USER TARGETS================= -->
 
+   <property name="fullArea" location="${build.area}" />
+    <target name="test">
+     <exec dir="${build.area}" executable="rst2html"
+           output="${build.area}/new.htm" failonerror="true">
+            <arg value="new.rst" />
+        </exec>
+    </target>
+
     <target name="genSourceREADME" description="Generate source README.rst from template">
         <copy file="README_Template.rst" tofile="README.rst" overwrite="true">
             <filterset>
@@ -159,14 +167,17 @@
             <fileset dir="." includes="*.txt" excludes="changes.txt" />
         </copy>
 
-        <!-- Create README.rst via token replacement in template and generate HTML version -->
+        <!-- Create README.rst via token replacement in template and generate HTML version.
+             Moronically, exec doesn't use the dir attribute for the output path so that
+             needs expressing explicitly -->
 
         <copy file="README_Template.rst" tofile="${build.area}/README.rst" overwrite="false">
             <filterset>
                 <filter token="RESOURCES_PATH" value="resources" />
             </filterset>
         </copy>
-        <exec dir="${build.area}" executable="rst2html" output="README.htm" failonerror="true">
+        <exec dir="${build.area}" resolveexecutable="true" executable="rst2html"
+              output="${build.area}/README.htm" failonerror="true">
             <arg value="README.rst" />
         </exec>
 
