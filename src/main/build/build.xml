@@ -125,14 +125,6 @@
 
     <!-- =================MAIN USER TARGETS================= -->
 
-   <property name="fullArea" location="${build.area}" />
-    <target name="test">
-     <exec dir="${build.area}" executable="rst2html"
-           output="${build.area}/new.htm" failonerror="true">
-            <arg value="new.rst" />
-        </exec>
-    </target>
-
     <target name="genSourceREADME" description="Generate source README.rst from template">
         <copy file="README_Template.rst" tofile="README.rst" overwrite="true">
             <filterset>
