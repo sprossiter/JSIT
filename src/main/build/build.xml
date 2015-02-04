@@ -1,0 +1,423 @@
+<!--
+    JSIT Ant build file. Requires Ant 1.8+
+    Author: Stuart Rossiter
+	
+    ****************************************************************************	
+    Copyright 2015 University of Southampton
+	
+    This file is part of JSIT.
+
+    JSIT is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    JSIT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
+    ****************************************************************************
+    
+-->
+<project name="JSIT" default="buildDist" basedir="../../..">
+
+    <!-- =================CONFIG PROPERTIES================= -->
+
+    <!--
+        Uncomment if using a Java 1.8 JDK
+    <property name="build.compiler" value="javac1.8" />
+    -->
+    <property name="build.compiler" value="javac1.8" />
+
+    <!--
+        Uncomment if using Eclipse Kepler due to problem with back-level
+        Ant 1.8.4 when compiling with a 1.8 JDK; see
+        http://stackoverflow.com/questions/20702626
+    <property name="build.compiler" value="javac1.7" />
+    -->
+
+    <!--
+        For build environments not using Java 1.8 (which is what the AnyLogic
+        dependency is targetted for), such as Eclipse Indigo on Ubuntu 12.04,
+        can use ECJ as the compiler (as below) to avoid binary incompatibility errors
+        (which we don't need to worry about; the code will still be *run* on a 1.8
+        JVM when used with AnyLogic). See http://stackoverflow.com/questions/28240545.
+        You will need a copy of ecj.jar on the classpath if running Ant outside of
+        Eclipse, such as from Ubuntu package ecj or ecj-gcj. However, the Javadoc
+        creation will still fail with the same issue (because that uses the
+        ex-Eclipse-installed JDK)
+    <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+    -->
+
+
+    <!-- General build variables -->
+
+    <property name="jsit.ver" value="0.2-SNAPSHOT" />
+    <property name="build.area" value="buildOutputs/${jsit.ver}" />
+
+    <!-- JSIT Core dependency versions -->
+
+    <property name="libver.logback" value="1.1.2" />
+    <property name="libver.slf4j" value="1.7.10" />
+    <property name="libver.xstream" value="1.4.7" />
+    <property name="libver.xmlpull" value="1.1.3.1" />
+    <property name="libver.xpp3" value="1.1.4c" />
+    <property name="libver.commons-codec" value="1.10" />
+    <property name="libver.commons-io" value="2.4" />
+    <property name="libver.commons-configuration" value="1.10" />
+    <property name="libver.commons-lang" value="2.6" />
+    <property name="libver.commons-logging" value="1.2" />
+    <property name="libver.anylogic" value="7.1.1" />
+
+    <property name="libver.libsvn.V6" value="1.6.23" />
+    <!-- CollabNet and SlikSVN now at v1.8.11 (and WANDisco for x32 only) -->
+    <property name="libver.libsvn.V8" value="1.8.11" />
+
+    <!-- Build and runtime-additions classpaths -->
+
+    <path id="build.classpath">
+        <pathelement location="buildTemp/bin" />
+        <fileset refid="build.libs.OSS" />
+        <fileset refid="build.libs.proprietary" />
+    </path>
+
+    <fileset id="build.libs.OSS" dir="lib">
+        <!-- Need libsvn JAR with both Apache and Tigris packages in (unlike the WANDisco one) -->
+        <include name="libsvn-java-${libver.libsvn.V8}.jar" />
+        <include name="commons-codec-${libver.commons-codec}.jar" />
+        <include name="commons-configuration-${libver.commons-configuration}.jar" />
+        <include name="commons-io-${libver.commons-io}.jar" />
+        <include name="logback-classic-${libver.logback}.jar" />
+        <include name="logback-core-${libver.logback}.jar" />
+        <include name="slf4j-api-${libver.slf4j}.jar" />
+        <include name="xstream-${libver.xstream}.jar" />
+        <include name="commons-lang-${libver.commons-lang}.jar" />
+    </fileset>
+
+    <fileset id="build.libs.proprietary" dir="lib">
+        <include name="com.anylogic.engine-${libver.anylogic}.jar" />
+    </fileset>
+
+    <fileset id="dist.libs.build.additions.OSS" dir="lib">
+        <!-- JARs and license/notice files for runtime only libs -->
+        <include name="commons-logging-${libver.commons-logging}*" />
+        <include name="libsvn-java-${libver.libsvn.V6}*" />
+        <include name="xmlpull-${libver.xmlpull}*" />
+        <include name="xpp3_min-${libver.xpp3}*" />
+        <!-- Licenses and notices for build-time ones -->
+        <include name="libsvn-java-${libver.libsvn.V8}_*" />
+        <include name="commons-codec-${libver.commons-codec}_*" />
+        <include name="commons-configuration-${libver.commons-configuration}_*" />
+        <include name="commons-io-${libver.commons-io}_*" />
+        <include name="logback-${libver.logback}_*" />
+        <include name="slf4j-api-${libver.slf4j}_*" />
+        <include name="xstream-${libver.xstream}_*" />
+        <include name="commons-lang-${libver.commons-lang}_*" />
+    </fileset>
+
+    <union id="dist.libs">
+        <resources refid="build.libs.OSS" />
+        <resources refid="dist.libs.build.additions.OSS" />
+    </union>
+
+    <!-- =================MAIN USER TARGETS================= -->
+
+    <target name="genSourceREADME" description="Generate source README.rst from template">
+        <copy file="README_Template.rst" tofile="README.rst" overwrite="true">
+            <filterset>
+                <filter token="RESOURCES_PATH" value="src/main/resources" />
+            </filterset>
+        </copy>
+        <exec dir="." executable="rst2html" output="README.htm" failonerror="true">
+            <arg value="README.rst" />
+        </exec>
+    </target>
+
+    <target name="buildDist" description="Build JSIT distribution"
+            depends="getDependencies, buildLibSVN-1.6, buildLibSVN-1.8">
+
+        <!-- Create dir structure and copy non-source items
+             Build JSIT JARs
+             Build Javadoc
+             Copy dependencies and licenses
+        -->
+
+        <!-- Clean build area and create build temp area (which is NOT cleaned) if needed -->
+
+        <delete quiet="true" dir="${build.area}" />
+        <mkdir dir="${build.area}" />
+        <mkdir dir="buildTemp/bin" />
+        <!-- Creates parents and does nothing if exists -->
+
+        <!-- Main non-source-code copy -->
+
+        <copy todir="${build.area}">
+            <fileset dir="src/main" includes="config/**,resources/**,scripts/**" />
+            <fileset dir="." includes="*.txt" excludes="changes.txt" />
+        </copy>
+
+        <!-- Create README.rst via token replacement in template and generate HTML version -->
+
+        <copy file="README_Template.rst" tofile="${build.area}/README.rst" overwrite="false">
+            <filterset>
+                <filter token="RESOURCES_PATH" value="resources" />
+            </filterset>
+        </copy>
+        <exec dir="${build.area}" executable="rst2html" output="README.htm" failonerror="true">
+            <arg value="README.rst" />
+        </exec>
+
+        <!-- Compile source code -->
+
+        <javac srcdir="src/main/java" destdir="buildTemp/bin" source="1.6" target="1.6" includeantruntime="false">
+            <classpath refid="build.classpath" />
+        </javac>
+
+        <!-- TODO: Add all automated tests -->
+
+        <!-- Create JSIT JARs and Javadoc -->
+
+        <jar basedir="buildTemp/bin"
+             destfile="${build.area}/lib/jsit-core-${jsit.ver}.jar"
+             includes="uk/ac/soton/simulation/jsit/core/*.class"
+             compress="true" encoding="UTF-8" update="true" />
+
+        <jar basedir="buildTemp/bin"
+             destfile="${build.area}/lib/jsit-anylogic-${jsit.ver}.jar"
+             includes="uk/ac/soton/simulation/jsit/anylogic/*.class"
+             compress="true" encoding="UTF-8" update="true" />
+
+        <javadoc sourcepath="src/main/java" destdir="${build.area}/javadoc" access="public"
+                 Verbose="true" Author="true" Version="true" Use="true" failonerror="true"
+                 Doctitle="JSIT ${jsit.ver} API Documentation"
+                 Windowtitle="JSIT ${jsit.ver} API Documentation">
+            <classpath refid="build.classpath" />
+        </javadoc>
+
+        <!-- Copy to-be-distributed dependencies and licenses in -->
+
+        <copy todir="${build.area}/lib">
+            <resources refid="dist.libs" />
+        </copy>
+
+    </target>
+
+    <target name="getDependencies" description="Get JSIT dependencies" depends="getCoreDependencies, getAnyLogicDependencies">
+    </target>
+
+    <target name="buildLibSVN" description="Build SVN Java binding libraries"
+            depends="buildLibSVN-1.8, buildLibSVN-1.6">
+    </target>
+
+    <!-- ====================INTERNAL STANDALONE TARGETS================= -->
+
+    <target name="getCoreDependencies"
+            description="Get JSIT core dependencies"
+            depends="buildLibSVN">
+
+        <mkdir dir="buildTemp/libDists" />
+
+        <!-- Logback (core and classic libraries) -->
+
+        <get src="http://logback.qos.ch/dist/logback-${libver.logback}.zip"
+             dest="buildTemp/libDists/logback-${libver.logback}.zip" skipexisting="true" verbose="true" />
+
+        <unzip src="buildTemp/libDists/logback-${libver.logback}.zip" dest="lib" overwrite="false">
+            <patternset>
+                <include name="logback-${libver.logback}/LICENSE.txt" />
+                <include name="logback-${libver.logback}/logback-core-${libver.logback}.jar" />
+                <include name="logback-${libver.logback}/logback-classic-${libver.logback}.jar" />
+            </patternset>
+            <chainedmapper>
+                <flattenmapper />
+                <mapper>
+                    <globmapper from="LICENSE.txt" to="logback-${libver.logback}_LICENSE.txt" />
+                    <globmapper from="*.jar" to="*.jar" />
+                </mapper>
+            </chainedmapper>
+        </unzip>
+
+        <!-- SLF4J API -->
+
+        <get src="http://www.slf4j.org/dist/slf4j-${libver.slf4j}.zip"
+             dest="buildTemp/libDists/slf4j-${libver.slf4j}.zip"
+             skipexisting="true"
+             verbose="true" />
+
+        <unzip src="buildTemp/libDists/slf4j-${libver.slf4j}.zip" dest="lib" overwrite="false">
+            <patternset>
+                <include name="slf4j-${libver.slf4j}/LICENSE.txt" />
+                <include name="slf4j-${libver.slf4j}/slf4j-api-${libver.slf4j}.jar" />
+            </patternset>
+            <chainedmapper>
+                <flattenmapper />
+                <mapper>
+                    <globmapper from="LICENSE.txt" to="slf4j-api-${libver.slf4j}_LICENSE.txt" />
+                    <globmapper from="*.jar" to="*.jar" />
+                </mapper>
+            </chainedmapper>
+        </unzip>
+
+        <!-- XStream and dependencies (XMLPull, XPP3). The latter are also covered by the
+		     same license as core XStream, so reuse the license from the distribution which
+		     also includes them -->
+
+        <get src="https://nexus.codehaus.org/content/repositories/releases/com/thoughtworks/xstream/xstream-distribution/${libver.xstream}/xstream-distribution-${libver.xstream}-bin.zip"
+			 dest="buildTemp/libDists/xstream-${libver.xstream}.zip"
+			 skipexisting="true"
+			 verbose="true" />
+
+        <unzip src="buildTemp/libDists/xstream-${libver.xstream}.zip" dest="lib" overwrite="false">
+            <patternset>
+                <include name="xstream-${libver.xstream}/LICENSE.txt" />
+                <include name="xstream-${libver.xstream}/lib/xstream-${libver.xstream}.jar" />
+                <include name="xstream-${libver.xstream}/lib/xstream/xmlpull-${libver.xmlpull}.jar" />
+                <include name="xstream-${libver.xstream}/lib/xstream/xpp3_min-${libver.xpp3}.jar" />
+            </patternset>
+            <chainedmapper>
+                <flattenmapper />
+                <mapper>
+                    <globmapper from="LICENSE.txt" to="xstream-${libver.xstream}_LICENSE.txt" />
+                    <globmapper from="LICENSE.txt" to="xmlpull-${libver.xmlpull}_LICENSE.txt" />
+                    <globmapper from="LICENSE.txt" to="xpp3-${libver.xpp3}_LICENSE.txt" />
+                    <globmapper from="*.jar" to="*.jar" />
+                </mapper>
+            </chainedmapper>
+        </unzip>
+
+        <!-- Commons Codec -->
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="codec" />
+            <param name="libver.commons.subproj" value="${libver.commons-codec}" />
+        </antcall>
+
+        <!-- Commons IO -->
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="io" />
+            <param name="libver.commons.subproj" value="${libver.commons-io}" />
+        </antcall>
+
+        <!-- Commons Configuration and dependencies (Lang 2.x, Logging) -->
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="configuration" />
+            <param name="libver.commons.subproj" value="${libver.commons-configuration}" />
+        </antcall>
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="lang" />
+            <param name="libver.commons.subproj" value="${libver.commons-lang}" />
+        </antcall>
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="logging" />
+            <param name="libver.commons.subproj" value="${libver.commons-logging}" />
+        </antcall>
+
+    </target>
+
+    <target name="getAnyLogicDependencies" description="Get JSIT AnyLogic helper library additional dependencies">
+
+        <!-- TODO: Get Engine library from dummy applet -->
+
+    </target>
+
+    <target name="buildLibSVN-1.8">
+        <antcall target="buildLibSVN_Version" inheritAll="false">
+            <param name="libsvn.version" value="${libver.libsvn.V8}" />
+            <param name="libsvn.post.Apache" value="true" />
+        </antcall>
+    </target>
+
+    <target name="buildLibSVN-1.6">
+        <antcall target="buildLibSVN_Version" inheritAll="false">
+            <param name="libsvn.version" value="${libver.libsvn.V6}" />
+            <param name="libsvn.post.Apache" value="false" />
+        </antcall>
+    </target>
+
+    <!-- Ant 1.8+ allows property expansion for if/unless clauses
+	     (true -> do (if) or avoid (unless)) -->
+
+    <target name="getApacheLibSVN_License" if="${libsvn.post.Apache}">
+
+        <exec executable="svn">
+            <arg value="export" />
+            <arg value="http://svn.apache.org/repos/asf/subversion/tags/${libsvn.version}/LICENSE" />
+            <arg value="lib/libsvn-java-${libsvn.version}_LICENSE.txt" />
+        </exec>
+
+        <exec executable="svn">
+            <arg value="export" />
+            <arg value="http://svn.apache.org/repos/asf/subversion/tags/${libsvn.version}/NOTICE" />
+            <arg value="lib/libsvn-java-${libsvn.version}_NOTICE.txt" />
+        </exec>
+
+    </target>
+
+    <target name="getCollabnetLibSVN_License" unless="${libsvn.post.Apache}">
+
+        <exec executable="svn">
+            <arg value="export" />
+            <arg value="http://svn.apache.org/repos/asf/subversion/tags/${libsvn.version}/subversion/LICENSE" />
+            <arg value="lib/libsvn-java-${libsvn.version}_LICENSE.txt" />
+        </exec>
+
+    </target>
+
+    <!-- =================INTERNAL 'SUB-FUNCTION' TARGETS================= -->
+
+    <target name="getApacheCommonsDependency">
+
+        <get src="http://www.mirrorservice.org/sites/ftp.apache.org/commons/${commons.subproj}/binaries/commons-${commons.subproj}-${libver.commons.subproj}-bin.zip"
+			 dest="buildTemp/libDists/commons-${commons.subproj}-${libver.commons.subproj}.zip"
+		     skipexisting="true"
+			 verbose="true" />
+
+        <unzip src="buildTemp/libDists/commons-${commons.subproj}-${libver.commons.subproj}.zip"
+			   dest="lib"
+			   overwrite="false">
+            <patternset>
+                <include name="commons-${commons.subproj}-${libver.commons.subproj}/LICENSE.txt" />
+                <include name="commons-${commons.subproj}-${libver.commons.subproj}/NOTICE.txt" />
+                <include name="commons-${commons.subproj}-${libver.commons.subproj}/commons-${commons.subproj}-${libver.commons.subproj}.jar" />
+            </patternset>
+            <chainedmapper>
+                <flattenmapper />
+                <mapper>
+                    <globmapper from="LICENSE.txt" to="commons-${commons.subproj}-${libver.commons.subproj}_LICENSE.txt" />
+                    <globmapper from="NOTICE.txt" to="commons-${commons.subproj}-${libver.commons.subproj}_NOTICE.txt" />
+                    <globmapper from="*.jar" to="*.jar" />
+                </mapper>
+            </chainedmapper>
+        </unzip>
+
+    </target>
+
+    <target name="buildLibSVN_Version"
+		    depends="getApacheLibSVN_License, getCollabnetLibSVN_License">
+
+        <property name="build.dir" value="buildTemp/libsvn-${libsvn.version}" />
+
+        <exec executable="svn">
+            <arg value="export" />
+            <arg value="http://svn.apache.org/repos/asf/subversion/tags/${libsvn.version}/subversion/bindings/javahl/src" />
+            <arg value="${build.dir}/src" />
+        </exec>
+
+        <mkdir dir="${build.dir}/classes" />
+
+        <javac srcdir="${build.dir}/src" destdir="${build.dir}/classes"
+               includeAntRuntime="false" source="1.6" target="1.6" />
+
+        <jar destfile="lib/libsvn-java-${libsvn.version}.jar"
+             basedir="${build.dir}/classes" />
+
+    </target>
+
+</project>

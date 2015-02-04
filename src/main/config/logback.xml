@@ -1,0 +1,129 @@
+<!--
+    JSIT logging configuration file
+    Author: Stuart Rossiter
+     
+    ****************************************************************************       
+    Copyright 2015 University of Southampton
+        
+    This file is part of JSIT.
+
+    JSIT is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    JSIT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
+    ****************************************************************************
+    
+    For JSIT users, this can be used to configure whether an events log is
+    produced, and the level of diagnostics messages produced in the diagnostics
+    log and on the console.
+
+    **USERS**: JSIT users should customise this file as indicated in comment
+    entries prefixed **USERS**. See the JSIT User Guide for more details.
+-->
+
+<configuration>
+
+  <!-- *********** FIXED CONFIGURATION SETTINGS: DO NOT CHANGE ************ -->
+
+  <!-- **USERS**: Enable line below for trace of Logback actions
+  <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+  -->
+
+  <!-- Sifting appenders to create per sim-instance (thread) log files. We will
+       replace the encoder programmatically later. (Logback
+       requires us to have an encoder when creating it via a config file.)
+       
+       **USERS**: Change path to outputs folder in <file> tags as needed
+       (one-off change)
+  -->
+
+  <appender name="MSGS_RUN_SIFTER" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <discriminator>
+        <key>runID</key>
+        <defaultValue>missingRunID</defaultValue>
+    </discriminator>
+    <sift>
+        <appender name="${runID}_Msgs" class="ch.qos.logback.core.FileAppender">
+            <file>../Outputs/${runID}/modelDiagnostics.log</file>
+            <append>false</append>
+            <encoder>
+                <pattern>%msg%n</pattern>
+            </encoder>
+        </appender>
+    </sift>
+  </appender>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+          <pattern>%msg%n</pattern>
+      </encoder>
+  </appender>
+
+  <appender name="EVENTS_RUN_SIFTER" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <discriminator>
+        <key>runID</key>
+        <defaultValue>missingRunID</defaultValue>
+    </discriminator>
+    <sift>
+        <appender name="${runID}_Events" class="ch.qos.logback.core.FileAppender">
+            <file>../Outputs/${runID}/modelEvents.log</file>
+            <append>false</append>
+            <encoder>
+                <pattern>%msg%n</pattern>
+            </encoder>
+        </appender>
+    </sift>
+  </appender>
+
+  <!-- Model loggers for events and diagnostics (respectively). The custom
+       file appenders will be added programmatically within the model. (They
+       need access to AnyLogic code to add the simulation day and time to the
+       message.) -->
+
+  <!-- ******************** USER CONFIGURATION SETTINGS ******************** -->
+
+  <!-- Diagnostics messages from the JSIT framework: default level INFO.
+  
+       **USERS**: Change to DEBUG or TRACE for more information (or WARN or
+       ERROR for less information) -->
+
+  <logger name="uk.ac.soton.simulation.jsit" level="INFO" additivity="false">
+    <appender-ref ref="MSGS_RUN_SIFTER" />
+    <appender-ref ref="CONSOLE" />
+  </logger>
+
+  <!-- Events log: change level to OFF to turn off, ALL to turn on. . Remove the 
+       CONSOLE line if you don't want events also echoed to the console -->
+
+  <logger name="MODEL_DOMAIN_EVENTS" level="ALL" additivity="false">
+    <appender-ref ref="EVENTS_RUN_SIFTER" />
+    <appender-ref ref="MSGS_RUN_SIFTER" />
+    <appender-ref ref="CONSOLE" />
+  </logger>
+
+  <!-- Diagnostics messages for the model.
+  
+       **USERS**: Change MODEL to your model's base package substring, and set
+       logging level as needed
+  -->
+
+  <logger name="MODEL" level="INFO" additivity="false">
+    <appender-ref ref="MSGS_RUN_SIFTER" />
+    <appender-ref ref="CONSOLE" />
+  </logger>
+
+  <!-- **USERS**: Use entries like this to change the level for specific classes
+  <logger name="MODEL.MyModelClass"
+          level="DEBUG" additivity="true" />
+  -->
+
+</configuration>
+

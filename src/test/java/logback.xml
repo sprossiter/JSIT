@@ -1,0 +1,19 @@
+<!--
+     Basic testing Logback config file; all output to console (default) and just adjust
+     log levels
+-->
+
+<configuration>
+ 
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+          <pattern>%msg%n</pattern>
+      </encoder>
+  </appender>
+
+    <logger name="uk.ac.soton.simulation.jsit" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE" />
+  </logger>
+
+</configuration>
+

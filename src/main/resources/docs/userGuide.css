@@ -1,0 +1,119 @@
+/*
+    JSIT User Guide CSS file
+    Author: Stuart Rossiter
+	
+    ****************************************************************************	
+    Copyright 2015 University of Southampton
+	
+    This file is part of JSIT.
+
+    JSIT is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    JSIT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
+    ****************************************************************************
+    
+*/
+
+/* All margins/padding/border are: top, right, bottom, left */
+
+/* ------------------------------------------------------------------------- */
+/* Entire page setup with background border                                  */
+/* ------------------------------------------------------------------------- */
+
+body {
+    padding:0;
+    margin: 1em 3% 1em 3%;
+    font-family: arial;
+}
+
+/* ------------------------------------------------------------------------- */
+/* General (anywhere in document) styles                                     */
+/* ------------------------------------------------------------------------- */
+
+div.warning {
+    clear: both;
+    width: 40%;
+    font-size: small;
+    padding: 3px;
+    margin: 7px 0px 7px 20px;
+    border: 1px solid red;
+    float: right;
+}
+
+div.todo {
+    clear: both;
+    width: 40%;
+    font-size: small;
+    padding: 3px;
+    margin: 7px 0px 7px 20px;
+    border: 1px solid blue;
+    float: right;
+}
+
+div.sideNote {
+    clear: both;
+    width: 40%;
+    font-size: small;
+    padding: 3px;
+    margin: 7px 0px 7px 20px;
+    border: 1px solid #006400;      /* a dark green colour */
+    float: right;
+}
+
+/* Top link (with hr) occurs before each build step */
+
+hr {
+    clear: both;
+}
+
+div.topLink {
+    clear: both;
+    float: right;
+}
+
+dt {
+    font-weight: bold;
+}
+
+li {
+    margin-bottom: 0.3em;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 3px;
+    padding-bottom: 0px;
+}
+
+p.subHeading {
+    text-align: center;
+    margin-top: 0px;
+    padding-top: 0px;
+}
+
+/* Code samples. Base CSS from: http://projectcerbera.com/web/articles/code-in-pre */
+
+pre {
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -o-pre-wrap;
+    /* background: #faf8f0; */
+    margin-left: 4em;
+}
+
+/* Technical terms inline */
+
+span.term {
+    font-weight: bold;
+    color: DarkGreen;
+}
+
