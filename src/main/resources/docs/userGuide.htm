@@ -35,7 +35,7 @@
 <h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
 <p class="subHeading"><b>JSIT Version: </b>0.2
 <br />
-<b>Last Updated: </b>2nd February 2015</p>
+<b>Last Updated: </b>7th February 2015</p>
 
 <h2>Contents</h2>
 
@@ -622,32 +622,7 @@ experiments, include a <span class="term">logging configuration file</span>
 <code>logback.xml</code>, customised from the template provided in
 <code>src/main/config/logback.xml</code> (see the comments therein). Unless you
 want to adjust the default logging behaviour, the only things you need to change
-in the template is your outputs folder path (if not the default
-<code>Experiments/Outputs</code>) and your model's Java package name as below:
-
-<pre>
-&lt;appender name="${runID}_Msgs" class="ch.qos.logback.core.FileAppender"&gt;
-    &lt;file&gt;Experiments/Outputs/${runID}/modelDiagnostics.log&lt;/file&gt;
-    &lt;append&gt;false&lt;/append&gt;
-    &lt;encoder&gt;
-    &lt;pattern&gt;%msg%n&lt;/pattern&gt;
-    &lt;/encoder&gt;
-&lt;/appender&gt;
-</pre>
-
-and
-
-<pre>
-&lt;appender name="${runID}_Events" class="ch.qos.logback.core.FileAppender"&gt;
-    &lt;file&gt;Experiments/Outputs/${runID}/modelEvents.log&lt;/file&gt;
-    &lt;append&gt;false&lt;/append&gt;
-    &lt;encoder&gt;
-    &lt;pattern&gt;%msg%n&lt;/pattern&gt;
-    &lt;/encoder&gt;
-&lt;/appender&gt;
-</pre>
-
-and
+in the template is your model's Java package name as below:
 
 <div class="sideNote">If your model code is contained in multiple packages, use
 multiple entries of the four lines with the appropriate package names in
@@ -660,23 +635,6 @@ each.</div>
 &lt;/logger&gt;
 </pre>
 </p>
-
-<div class="sideNote">You need to know what the working directory will be when
-running your simulation, since all paths you give will be relative to this. When
-developed in an IDE, the root directory of the project is normally the working
-directory.
-
-<br /><br />
-
-You can also use Java code as below to print out the working directory at
-run-time:
-
-<pre>
-import java.io.File;
-
-System.out.println("Working directory: " + new File(".").getAbsolutePath());
-</pre>
-</div>
 
 <p>In your simulation directory, include a customised JSIT <span
 class="term">model version file</span> <code>modelVersion.properties</code>. If
@@ -703,6 +661,23 @@ LastCommitRev = $Revision$
 control system (or 'checkpoint' the model code if using the NoVCS file) using
 JSIT tools.</p>
 
+<div class="sideNote">You need to know what the working directory will be when
+running your simulation, since all paths you give will be relative to this. When
+developed in an IDE, the root directory of the project is normally the working
+directory.
+
+<br /><br />
+
+You can also use Java code as below to print out the working directory at
+run-time:
+
+<pre>
+import java.io.File;
+
+System.out.println("Working directory: " + new File(".").getAbsolutePath());
+</pre>
+</div>
+
 <p>In your experiments' inputs directory, include a <span class="term">model
 source paths file</span> <code>modelSourcePaths.properties</code> which tells
 JSIT the paths from where your experiments are run to where certain aspects of
@@ -712,22 +687,16 @@ structure earlier, this would have non-comment contents as below:
 
 <pre>
 ModelVersionFileDir = Sim
-InVCS_SimCodePath = Sim
+SimSourcePath = Sim
 </pre>
 
-<div class="sideNote">This is used to check whether the run is likely to be
-reproducible since, if the source code is not a defined VCS commit, the source
-code used can potentially not be recreated. This check is not definitive since
-the binary (compiled) code being run might not actually be the compiled form of
-the source code specified (though obviously you should set things up so that it
-is!).</div>
-
-The second entry here is only needed if you have the source code of the model
-(as was included in a VCS) available at run-time, as is the case in the example
-given. It is used so that JSIT can check whether the simulation source code
-specified has been changed from the VCS version it came from; you can also omit
-this second entry if you do have the source code available, but don't want this
-check to be done.</p>
+The second entry here (which can include multiple directories) is only needed if
+you have the source code of the model available at run-time, as is the case in
+the example given
+. It is used so that JSIT can check whether the
+simulation source code specified has been changed from the VCS version it came
+from; you can also omit this second entry if you do have the source code
+available, but don't want this check to be done.</p>
 
 <div class="sideNote">Typically, you'd put the script in the root directory if
 you are managing all the code as a single IDE project. (You don't have to in
@@ -945,33 +914,7 @@ the <code>ModelX/Experiments</code> folder, and your
 
 <pre>
 ModelVersionFileDir = ../Sim
-InVCS_SimCodePath = ../Sim
-</pre>
-</p>
-
-<p>The paths in your <code>logback.xml</code> file also differ from the previous
-example as below:
-
-<pre>
-&lt;appender name="${runID}_Msgs" class="ch.qos.logback.core.FileAppender"&gt;
-    &lt;file&gt;../Outputs/${runID}/modelDiagnostics.log&lt;/file&gt;
-    &lt;append&gt;false&lt;/append&gt;
-    &lt;encoder&gt;
-    &lt;pattern&gt;%msg%n&lt;/pattern&gt;
-    &lt;/encoder&gt;
-&lt;/appender&gt;
-</pre>
-
-and
-
-<pre>
-&lt;appender name="${runID}_Events" class="ch.qos.logback.core.FileAppender"&gt;
-    &lt;file&gt;../Outputs/${runID}/modelEvents.log&lt;/file&gt;
-    &lt;append&gt;false&lt;/append&gt;
-    &lt;encoder&gt;
-    &lt;pattern&gt;%msg%n&lt;/pattern&gt;
-    &lt;/encoder&gt;
-&lt;/appender&gt;
+SimSourcePath = ../Sim
 </pre>
 </p>
 
@@ -1007,13 +950,13 @@ Ones you might want to override for the core JSIT setup are as below:
 <li><b><code>getInputsBasePath</code></b> (no parameters): returns a
 <code>String</code> which gives the relative path to your inputs directory
 (relative to the base Java working directory when a model experiment is run).
-This defaults to <code>../Inputs</code> which matches the example directory
+This defaults to <code>Inputs</code> which matches the example directory
 structure.</li>
 
 <li><b><code>getOutputsBasePath</code></b> (no parameters): returns a
 <code>String</code> which gives the relative path to your outputs directory
 (relative to the base Java working directory when a model experiment is run).
-This defaults to <code>../Outputs</code> which matches the example directory
+This defaults to <code>Outputs</code> which matches the example directory
 structure.</li>
 
 <li><b><code>runSpecificEnvironmentSetup</code></b> (no parameters and no return
@@ -1186,9 +1129,29 @@ settings applied for this run (see the <a href="#stochControl">stochasticity
 control section</a>).</li>
 
 </ul>
+
+<div class="sideNote">When running simulations via an IDE, you can sometimes get
+extra libraries added to the runtime classpath which you don't really want/need
+(e.g., JUnit libraries with Eclipse). These will affect the checksum, so check
+the settings file carefully (where it lists all libraries used).</div>
+
+In particular, the checksum can be used to check if two runs definitely used
+exactly the same runtime code.
 </p>
 
+<p>There are also runtime checks as to whether the source code for the model has
+been changed from that 'registered' via version-control (which may mean this run
+is not reproducible); see the <a href="#vc">Model Version Control</a>
+section.</p>
+
 <h4 id="reproAnyLogic">AnyLogic (via helper library)</h4>
+
+<p>For an AnyLogic model (when run from the AnyLogic client rather than
+exported), the source code <em>is</em> the only code that the user maintains.
+(This is built and compiled by AnyLogic automatically before any run.) Thus, the
+JSIT run reproducibility and version control functionality is particularly
+useful since the source 'is' the model and distinctions between source and
+runtime code are less problematic.</p>
 
 <p>The helper library uses the code structure generated by AnyLogic to
 automatically identify all the model's parameters (i.e., the Parameters in the
@@ -1213,45 +1176,99 @@ model</code></a>.</p>
 <h3 id="vc">Model Version Control</h3>
 
 <p>As discussed earlier, you specify in your model version file which version
-control system you are using for your model. You use your commit/checkpoint
-batch script (hereafter just 'batch script') to commit or checkpoint your
-model.</p>
+control system you are using for your model. You use your commit script to
+commit (when using a VCS) or checkpoint (when not) your model. (I'll just refer
+to 'commits' generally in what follows, although the non-VCS case is technically
+something slightly different.)</p>
 
-<p>At runtime, if you specified the <code>InVCS_SimCodePath</code> property in
-your model source paths file, JSIT will check whether the version-controlled
-source code for the model has been changed from its last committed state, and
-will issue a warning message if so (which means that you may not be able to
-reproduce this run of the model).</p> 
+<p>Your commit message should be specified in a <code>workingChanges.txt</code>
+file in the same directory as the commit script (which is the root directory of
+the commit). After your commit, these changes will be appended to the
+<code>jsitCommitHistory.txt</code> (which is created if it does not exist)
+together with a header showing the commit time and source directories checksum
+(see later). You can therefore use this second file as a history of all your
+commits, which you could potentially store in the VCS as well.</p>
+
+<div class="sideNote">Future versions of JSIT will allow you to specify more
+precisely what runtime checks you want and when they should be an error (rather
+than a warning). These improved capabilities will also more elegantly handle the
+distinction between 'real' source code and libraries, and give the user more
+control over how the processing works.
+
+<br /><br />
+
+There is currently a basic assumption that the source code directories you
+specify do, in fact, contain the version-controlled source for what is being
+run. Future versions of JSIT will attempt to check this a little more
+rigorously. (A <em>completely</em> accurate check is not really possible without
+JSIT actually compiling your code and checking the outcomes.)</div>
+
+<p>At runtime, if you specified the <code>SimSourcePath</code> property in your
+model source paths file, JSIT will check whether the source code for the model
+has been changed from its state at the last commit, and will issue a warning
+message if so (which means that you may not be able to reproduce this run of the
+model).</p> 
+
+<p><b>NB</b>: The source code for your model is taken as <em>all</em> the files
+in your source directories, <em>whether they are under version-control or
+not</em>. (Your model version file and any hidden folders, such as those used by
+SVN, are ignored.) This is normally what you want to happen because your source
+folders may include other not-in-the-VCS code that your model uses at runtime;
+typically third-party libraries (which it is not best-practice to include in the
+VCS). You want to check that <em>none</em> of these files have been altered at
+runtime from their state at commit-time. However, having not-in-VCS code in your
+source folders is not ideal from a run reproducibility perspective because you
+have no straightforward way of retrieving these non-VCS files if you want to
+reproduce a run. However, as the <a href="#repro">Run Reproducibility</a>
+section states, JSIT does record all the libraries (and other classpath folders)
+used for a run (but not currently any provenance of where these files came from)
+which will help in reproducing the code.</p>
 
 <h4 id="vcNoVCS">No Version Control System (model 'checkpointing')</h4>
 
-<p>When you run your batch script it will checkpoint your simulation source code
-by calculating a checksum (MD5 hash) for its contents and storing this, together
-with a checkpoint timestamp, in the model version file. If, at runtime, the
-files on the simulation source code path do not match this checksum, the source
-code has changed and is flagged.</p>
+<p>When you run your commit script it will checkpoint your simulation source
+directories by calculating a checksum (MD5 hash) for its contents and storing
+this, together with a checkpoint timestamp, in the model version file. This
+checksum excludes your model version file and any hidden files. If, at
+runtime, the files on the simulation source code path do not match this
+checksum, the source code has changed and is flagged.</p>
 
 <p>You can therefore use the batch script as a 'poor man's
-version-control-system' to checkpoint versions of the model code. By looking at
-the model version file in a particular copy of the model code, you can see which
-checkpointed version it is.</p>
+version-control-system' to checkpoint versions of the model code. (If you want
+these different versions to be retrievable in future, it is your responsibility
+to store them in some suitable way; this is what a VCS is designed for, so I
+strongly recommend you use one instead!) By looking at the model version file in
+a particular copy of the model code, you can see which checkpointed version it
+is.</p>
 
 <h4 id="vcSVN">Subversion</h4>
 
-<p>When you run your batch script it will commit your simulation source code to
+<p>When you run your commit script it will commit your simulation source code to
 the SVN server and, in the model version file, store a commit timestamp and
-checksum (MD5 hash) for the source code. Using SVN keyword substitution, the
-model version file also stores details of the on-server URL and SVN revision for
-the commit.</p>
+checksum (MD5 hash) for the source code directories (as specified in the model
+source paths configuration file). Using SVN keyword substitution, the model
+version file also stores details of the on-server URL and SVN revision for the
+commit.</p>
 
 <p>When running a model, you may have checked-out source code (i.e., with SVN
-metadata) or exported source code (i.e., just the 'plain' source files). In the
-first case, JSIT will check if the source code has been modified from what was
-checked out (via SVN operations). In the latter case, it will check whether the
-source code has changed checksum.</p>
+metadata) or exported source code (i.e., just the 'plain' source files). In both
+cases, JSIT will check whether the source code has changed checksum (which, as
+mentioned earlier, will include any not-in-VCS code). Where you have checked-out
+source, JSIT will also check if this source has been modified from what was
+checked out (via SVN operations), so you can determine if any changes are in
+VCS-controlled source or elsewhere.</p>
 
 <p>If you forget and commit the source code without using the batch script, just
 run it later to register a follow-on JSIT commit.</p>
+
+<p><b>Note</b>: It is your choice how you structure your source directories, and
+which you specify in the model source paths configuration file. If you want to
+only specify directories which include in-VCS code you can do, but that means
+any not-in-VCS files used at runtime (e.g., JAR libraries) will not be included
+in the source checks. In any case, you can use the separate checksum of all
+runtime code in your JSIT-produced per-run settings file (see <a
+href="#repro">Run Reproducibility</a>) to determine if the total set of runtime
+code has changed from a previous run.</p>
 
 <div class="topLink"><a href="#">Top</a></div><br /><hr />
 

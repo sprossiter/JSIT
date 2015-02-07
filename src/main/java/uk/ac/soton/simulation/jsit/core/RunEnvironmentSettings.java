@@ -38,7 +38,25 @@ public class RunEnvironmentSettings {
     private static final Logger logger
                 = LoggerFactory.getLogger(RunEnvironmentSettings.class);
     
-    public static enum ModificationStatus { YES, NO, UNKNOWN };
+    public static enum ModificationStatus {
+        YES_NO_VCS_METADATA ("Yes (version-controlled code not distinguishable)"),
+        YES_IN_CHECKED_OUT ("Yes and in version-controlled/checkpointed code"),
+        YES_IN_NON_VCS ("Yes but in non-version-controlled code"),
+        NO ("No"),
+        UNKNOWN_NO_COMMIT ("Unknown (no previous JSIT commits/checkpoints)"),
+        UNKNOWN_NO_CHECK ("Unknown (check not made due to missing "
+                           + ModelVersioningAssistant.SIM_SOURCE_PATH_PROPERTY
+                           + " model source paths file property)");
+        
+        private final String asText;
+        private ModificationStatus(String asText) {
+            this.asText = asText;
+        }
+        @Override
+        public String toString() {
+            return asText;
+        }
+    };
     
 
     // ************************* Instance Fields ***************************************
@@ -65,9 +83,9 @@ public class RunEnvironmentSettings {
 
         ModelVersioningAssistant verChecker;
 
-        synchronized (RunEnvironmentSettings.class) {	// Ensure parallel runs do this sequentially			
+        synchronized (RunEnvironmentSettings.class) {    // Ensure parallel runs do this sequentially            
             verChecker = ModelVersioningAssistant.createAssistant(
-                    			modelMain.getInputsBasePath());			
+                                modelMain.getInputsBasePath());            
         }
         
         List<File> classpathEntries = ModelVersioningAssistant.getPathConstituents(
@@ -82,11 +100,11 @@ public class RunEnvironmentSettings {
         this.modelVCS_CommitID = lastCommitID == null ? "N/A" : lastCommitID;
         logger.debug("Calculating hash code for all runtime (classpath) code files...");
         this.runtimeCodeHash = verChecker.calcMD5HashForFileList(
-        					classpathEntries,	// File list
-        					true,				// Include hidden files
-        					null,				// No files excluded
-        					new String[] { "logback.xml" },		// Exclude Logback conf files
-        					true);				// Print file names
+                            classpathEntries,    // File list
+                            true,                // Include hidden files
+                            null,                // No files excluded
+                            new String[] { "logback.xml" },        // Exclude Logback conf files
+                            true);                // Print file names
         this.modificationStatus = verChecker.simHasLocalModifications();
         this.javaVersion = System.getProperty("java.version");
         this.javaVM = System.getProperty("java.vm.name") + " "
@@ -100,11 +118,14 @@ public class RunEnvironmentSettings {
 
         if (modelVCS.equals(VersionControlSystem.NONE.toString())) {
             logger.warn("MODEL IS NOT STORED IN A VERSION-CONTROL SYSTEM; "
-                    + "RUN MAY NOT BE REPRODUCIBLE");
+                        + "RUN MAY NOT BE REPRODUCIBLE");
+        }        
+        if (modificationStatus == ModificationStatus.NO) {
+            logger.info("No post-commit/checkpoint modifications to source directories");
         }
-        else if (modificationStatus != ModificationStatus.NO) {
-            logger.warn("MODEL SOURCE HAS LOCAL MODIFICATIONS TO COMMITTED VERSION; "
-                    	+ "RUN MAY NOT BE REPRODUCIBLE");
+        else {
+            logger.warn("RUN MAY NOT BE REPRODUCIBLE DUE TO MODIFICATION STATUS: "
+                        + modificationStatus.toString());
         }
 
     }

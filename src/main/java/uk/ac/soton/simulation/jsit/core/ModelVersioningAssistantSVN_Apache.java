@@ -158,17 +158,17 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
     @Override
     void doCommit(File sourceRootDir, final String changeNotes) {
 
-    	assert sourceRootDir.isDirectory();
-    	
+        assert sourceRootDir.isDirectory();
+        
         // Check if keywords property set up properly and set it up if needed
-    	String versionFilePath = getModelVersionFilePath();
-    	assert versionFilePath != null;
-    	
+        String versionFilePath = getModelVersionFilePath();
+        assert versionFilePath != null;
+        
         try {
             byte[] propData = hlClient.propertyGet(versionFilePath,
-            									   KEYWORDS_PROP,
-            									   null,
-            									   null); 	
+                                                   KEYWORDS_PROP,
+                                                   null,
+                                                   null);     
             if (propData == null || !(new String(propData).equals(KEYWORDS_VALUE))) {
                 HashSet<String> pathsSet = new HashSet<String>(1, 1.0f);
                 pathsSet.add(versionFilePath);
@@ -189,18 +189,18 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
         try {
             HashSet<String> pathsSet = new HashSet<String>(1, 1.0f);
             pathsSet.add(sourceRootDir.getAbsolutePath());
-            hlClient.commit(pathsSet,  			// Paths set; always just source root
+            hlClient.commit(pathsSet,              // Paths set; always just source root
                     Depth.infinity,             // Infinite depth
                     false,                      // Don't not unlock!
                     false,                      // Don't keep changelist
                     null,                       // No changelists
-                    null,			// No revprop mapping
-                    new CommitMessageCallback() {							
+                    null,            // No revprop mapping
+                    new CommitMessageCallback() {                            
                 @Override
                 public String getLogMessage(Set<CommitItem> items) {
                     return changeNotes;
                 }
-            },					// Commit msg callback
+            },                    // Commit msg callback
             new CommitCallback() {
                 @Override
                 public void commitInfo(CommitInfo commitInfo) {
@@ -211,7 +211,7 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
                     }
                     logger.info("Successfully committed new revision " + commitInfo.getRevision());
                 }
-            });					// Commit callback                  
+            });                    // Commit callback                  
         }
         catch (ClientException e) {
             throw new VersionControlException("SVN commit failed. You may need to do an SVN cleanup", e);
@@ -226,7 +226,7 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
     @Override
     String getRawSVN_Version(File codeDir) {
 
-    	assert codeDir.isDirectory();
+        assert codeDir.isDirectory();
         try {
             return hlClient.getVersionInfo(codeDir.getAbsolutePath(),
                     null,             // No trail URL

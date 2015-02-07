@@ -156,12 +156,12 @@ public class ModelVersioningAssistantSVN_Tigris extends ModelVersioningAssistant
     @Override
     void doCommit(File sourceRootDir, String changeNotes) {
 
-    	assert sourceRootDir.isDirectory();
-    	
+        assert sourceRootDir.isDirectory();
+        
         // Check if keywords property set up properly and set it up if needed
-    	String versionFilePath = getModelVersionFilePath();
-    	assert versionFilePath != null;
-    	
+        String versionFilePath = getModelVersionFilePath();
+        assert versionFilePath != null;
+        
         try {
             PropertyData propData = null;
             // Work round bug in 1.7.0+ of the JavaHL library where a non-existent property throws a

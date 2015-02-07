@@ -21,10 +21,12 @@
 #   along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
 #******************************************************************************
 #
-# Replace Core with the path to your model core code directory
-# relative to the location of this script.
+# Replace Sim/Libs with the path to the JSIT libraries directory.
+# Replace Sim with the path to your model source directories (see the JSIT
+# User Guide). This can include multiple directories separated by colons
+# as in a standard Linux path. (Use double quotes if there are spaces.)
 #
-java -cp Core/lib/* \
-uk.ac.soton.simulation.jsit.core.ModelVersionController Core
+java -cp "Sim/Libs/*" \
+uk.ac.soton.simulation.jsit.core.ModelVersioningAssistant COMMIT Sim
 echo "-------------------------------------------------------"
 echo "Commit complete (check for errors above)"

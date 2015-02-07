@@ -27,7 +27,7 @@ import org.slf4j.*;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public abstract class DistributionContinuous
                 extends Distribution implements Serializable {
 

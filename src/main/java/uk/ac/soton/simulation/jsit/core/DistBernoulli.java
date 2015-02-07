@@ -29,14 +29,14 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistBernoulli
 extends DistributionCategorical<Sampler.Binary> implements Serializable {
 
     // ************************** Static Fields ***************************************
 
     //private static final Logger logger = LoggerFactory.getLogger(
-    //					DistBernoulli.class);
+    //                    DistBernoulli.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -98,7 +98,7 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleBernoulli(p);
         }
-        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {   		
+        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {           
             sample = (p < 0.5 ? 2 : 1);
         }
 

@@ -27,7 +27,7 @@ import com.anylogic.engine.Dimension;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DimRangeVal implements DimConvertable, Serializable {
 
     // ************************ Static Fields *****************************************
@@ -71,7 +71,7 @@ public class DimRangeVal implements DimConvertable, Serializable {
 
         // Suppress this check due to bug in AnyLogic where Dimension is not thread-safe
         //if (mappedDim.getIndexPositionByName(Integer.toString(intValue)) == -1) {
-        //	throw new IllegalArgumentException("Value " + intValue + " is not in the Dimension's range");
+        //    throw new IllegalArgumentException("Value " + intValue + " is not in the Dimension's range");
         //}
 
     }

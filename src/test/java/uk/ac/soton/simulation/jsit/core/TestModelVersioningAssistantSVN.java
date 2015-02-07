@@ -253,7 +253,7 @@ public class TestModelVersioningAssistantSVN {
         }
         Assert.assertEquals("DummyModel", assistant.getUserModelName());
         Assert.assertEquals("0.1", assistant.getUserModelVersion());
-        logger.debug("Hash code after commit: " + assistant.getCommittedCodeHash());
+        logger.debug("Hash code after commit: " + assistant.getCommitTimeSourceDirsHash());
 
         /*
          * Now check further commit doesn't commit anything

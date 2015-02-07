@@ -111,7 +111,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
                 throw new IllegalArgumentException(
                         "HyperArray entry " + prob + " is not in [0,1]");
             }
-        }   	
+        }       
 
         this.hyperArray = hyperArray;
         this.hyperArrayDims = hyperArray.getDimensions();
@@ -146,7 +146,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
 
         // i now indexes the last dimension (which we're going to loop through)
 
-        double randomProb;    	
+        double randomProb;        
         if (mode == SampleMode.COLLAPSE_MID) {
             randomProb = 0.5d;
         }
@@ -180,11 +180,11 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
             }
         }
 
-        if (sample == null) {			// 'Overflow'; assume be due to rounding
+        if (sample == null) {            // 'Overflow'; assume be due to rounding
             logger.warn("Overflowed lookup table matching random sample " + randomProb
                     + ": assuming rounding issues. Defaulting to last alternative");
             C[] alts = categoryEnumType.getEnumConstants();
-            sample = alts[alts.length - 1];		// Default to last alternative
+            sample = alts[alts.length - 1];        // Default to last alternative
         }
 
         if (logger.isTraceEnabled()) {
@@ -223,7 +223,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
             // overrides apply to the lookup. We could have an explicit internal DistBernoulli,
             // but we'd have to change its p value every sample
             int alSample = ((Sampler_AnyLogic) getSampler()).sampleBernoulli(prob);
-            assert alSample == 1 || alSample == 2;			// 1-K scheme; see Sampler comments
+            assert alSample == 1 || alSample == 2;            // 1-K scheme; see Sampler comments
             sample = (alSample == 1 ? Binary.FAILURE : Binary.SUCCESS);
         }
 

@@ -28,7 +28,7 @@ import java.io.Serializable;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public abstract class StochasticItem implements Serializable {
 
     // ************************ Static Fields *****************************************
@@ -42,7 +42,7 @@ public abstract class StochasticItem implements Serializable {
     // runs will not be conducted in the same JVM (but still with a sample mode, currently
     // linked to the accessor)
     private AbstractStochasticAccessor<?> accessor = null;
-    private Sampler sampler = null;			// Framework-specific sampler
+    private Sampler sampler = null;            // Framework-specific sampler
 
 
     // ************************ Constructors ********************************************

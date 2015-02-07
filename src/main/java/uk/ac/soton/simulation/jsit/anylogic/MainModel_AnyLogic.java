@@ -26,7 +26,6 @@ import com.anylogic.engine.Engine;
 import com.anylogic.engine.Engine.State;
 
 import java.text.DecimalFormat;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.math.BigDecimal;
@@ -163,7 +162,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
             super.execute();
             getModelInitialiser().possibleMDC_KeysLoss();
         }
-    };	
+    };    
 
     // ************************ Constructors *******************************************
 
@@ -195,7 +194,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
         // invocations of simultaneous events with LIFO
 
         getEngine().setSimultaneousEventsSelectionMode(Engine.EVENT_SELECTION_FIFO);
-        new InitialMDC_SetEvent();			// Schedules itself on instantiation
+        new InitialMDC_SetEvent();            // Schedules itself on instantiation
 
     }
 
@@ -223,19 +222,19 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     public void onCreate() {
 
         // Superclass logic first (which will chain down through all embedded Agents)
-        super.onCreate();		
+        super.onCreate();        
 
-        if (jsitInitialiser.isModelInitiator(this)) {		// Only do if we're the initialiser
+        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser
             logger.debug("JSIT MainModel_AnyLogic onCreate() logic");
             try {
                 jsitInitialiser.saveModelSettings();
             }
             catch (IOException e) {
                 // Have to convert since no access to visually-designed Agent constructors
-                throw new RuntimeException("Can't create settings.xml file!");
+                throw new RuntimeException("Can't create model settings file!", e);
             }
 
-            doAllStaticStochRegistration();						// Hook for modeller to do any static reg
+            doAllStaticStochRegistration();                        // Hook for modeller to do any static reg
 
         }
 
@@ -247,18 +246,18 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     @Override
     public void onDestroy() {
 
-        if (jsitInitialiser.isModelInitiator(this)) {		// Only do if we're the initialiser
+        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser
             // For single-run experiments, AnyLogic destroys in a special Model Exec Control
             // Handler thread which will lose MDC keys if the model wasn't paused earlier
             // (since pauses and destruction trigger the creation of this thread). We could
             // check the thread name to only rewrite the keys for single-run experiments, but
             // no harm in doing it anyway and less dependent on AnyLogic internals
-            jsitInitialiser.possibleMDC_KeysLoss();   	
+            jsitInitialiser.possibleMDC_KeysLoss();       
             // Clean up initialiser. (May already have been done by embedded class or subclass.)
             jsitInitialiser.onMainModelDestroy();
         }
 
-        super.onDestroy();			// As per pattern in AnyLogic-generated code
+        super.onDestroy();            // As per pattern in AnyLogic-generated code
 
     }
 
@@ -267,21 +266,25 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
 
     /**
      * Default inputs base path; user should override in their subclass to change this.
+     * AnyLogic sets the working directory as the directory of the .alp file that the
+     * Experiment is in.
      */
     @Override
     public String getInputsBasePath() {
 
-        return ".." + File.separator + "Inputs";
+        return "Inputs";
 
     }    
 
     /**
      * Default outputs base path; user should override in their subclass to change this.
+     * AnyLogic sets the working directory as the directory of the .alp file that the
+     * Experiment is in.
      */
     @Override
     public String getOutputsBasePath() {
 
-        return ".." + File.separator + "Outputs";
+        return "Outputs";
 
     }
 
@@ -295,7 +298,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * }
      * else {
      *     return getSimRawTime(0) + " " + getSimDay() + " "
-     *			  + getSimTimeOfDay(TimeOfDayPrecision.MINS);
+     *              + getSimTimeOfDay(TimeOfDayPrecision.MINS);
      * }
      */
     @Override
@@ -484,7 +487,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
         }
         else if (precision == TimeOfDayPrecision.MILLISECS) {
             msgBuffer.append(":");
-            msgBuffer.append(timeFormatter.format(getMillisecond()));			
+            msgBuffer.append(timeFormatter.format(getMillisecond()));            
         }
 
         return msgBuffer.toString();

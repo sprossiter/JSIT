@@ -27,13 +27,13 @@ import java.io.Serializable;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public abstract class Sampler implements Serializable {
 
     // ************************ Static Fields *****************************************
 
     //private static final Logger logger
-    //				= LoggerFactory.getLogger(JSIT_Sampler.class);
+    //                = LoggerFactory.getLogger(JSIT_Sampler.class);
 
     private static final long serialVersionUID = 1L;
 

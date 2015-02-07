@@ -31,6 +31,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 
 import java.text.SimpleDateFormat;
 
+import uk.ac.soton.simulation.jsit.core.ModelVersioningAssistant.LibraryDetail.PartOfSimSource;
 import uk.ac.soton.simulation.jsit.core.RunEnvironmentSettings.ModificationStatus;
 
 /**
@@ -104,13 +105,15 @@ public abstract class ModelVersioningAssistant {
 
     };
     
-    public static class LibraryDetail {
-        public String jarName;
-        public boolean isPartOfSimSource;
+    static class LibraryDetail {
         
-        LibraryDetail(String jarName, boolean isPartOfSimSource) {
+        static enum PartOfSimSource { YES, NO, UNKNOWN; }; 
+        String jarName;
+        PartOfSimSource partOfSimSource;
+        
+        LibraryDetail(String jarName, PartOfSimSource partOfSimSource) {
             this.jarName = jarName;
-            this.isPartOfSimSource = isPartOfSimSource;
+            this.partOfSimSource = partOfSimSource;
         }
     };
     
@@ -123,7 +126,7 @@ public abstract class ModelVersioningAssistant {
     public static final String MODEL_SOURCE_PATHS_FILE_NAME = "modelSourcePaths.properties";
     public static final String VERSION_FILE_NAME = "modelVersion.properties";
     public static final String WORKING_CHANGES_FILE = "workingChanges.txt";
-    public static final String PREV_CHANGES_FILE = "lastCommitChanges.txt";
+    public static final String PREV_CHANGES_FILE = "jsitCommitHistory.txt";
 
     // Required properties completed by the user
     public static final String MODEL_NAME_PROPERTY = "ModelName";
@@ -131,10 +134,10 @@ public abstract class ModelVersioningAssistant {
     public static final String VCS_PROPERTY = "ModelVCS";
 
     public static final String VERSION_FILE_DIR_PROPERTY = "ModelVersionFileDir";
-    public static final String IN_VCS_PATH_PROPERTY = "InVCS_SimCodePath";
+    public static final String SIM_SOURCE_PATH_PROPERTY = "SimSourcePath";
 
     // Properties auto-added/updated as part of the commit process
-    public static final String MODEL_HASH_PROPERTY = "ModelHash";
+    public static final String SOURCE_DIRS_HASH_PROPERTY = "SourceDirsHash";
     public static final String VERSION_FILE_REPO_URL_PROPERTY = "VersionFileRepoURL";
     public static final String MODEL_REV_PROPERTY = "LastCommitRev";
     public static final String COMMIT_TIME_PROPERTY = "LastCommitTime";
@@ -177,7 +180,7 @@ public abstract class ModelVersioningAssistant {
         ModelVersioningAssistant verController = null;
 
         try {
-        	 File modelVersionFile = getModelVersionFile(simCodePath);
+             File modelVersionFile = getModelVersionFile(simCodePath);
              if (modelVersionFile == null) {
                  throw new IllegalArgumentException(
                      "Model version file not found in any directory on sim code path");
@@ -193,7 +196,7 @@ public abstract class ModelVersioningAssistant {
         boolean committedStuff = false;
 
         try {
-        	// Root of material committed is always the folder the batch script is run from
+            // Root of material committed is always the folder the batch script is run from
             committedStuff = verController.commitModelMaterial(new File("."));
         }
         catch (Throwable t) {
@@ -245,22 +248,27 @@ public abstract class ModelVersioningAssistant {
         }
         File modelVersionFile = new File(modelVerFileDirPath + File.separator + VERSION_FILE_NAME);
         if (!modelVersionFile.exists()) {
-        	throw new ModelVersioningException(VERSION_FILE_NAME + " not found in specified "
-        									   + VERSION_FILE_DIR_PROPERTY + " path");
+            throw new ModelVersioningException(VERSION_FILE_NAME + " not found in specified "
+                                               + VERSION_FILE_DIR_PROPERTY + " path");
         }
         
-        String inVCS_SimCodePath = pathProps.getProperty(IN_VCS_PATH_PROPERTY);
-        if (inVCS_SimCodePath == null) {
-            logger.warn("No " + IN_VCS_PATH_PROPERTY
-            			+ " property in model paths file; will not check code running");
+        String simSourcePath = pathProps.getProperty(SIM_SOURCE_PATH_PROPERTY);
+        List<File> simSourceDirs;
+        
+        if (simSourcePath == null) {
+            logger.warn("No " + SIM_SOURCE_PATH_PROPERTY
+                        + " property in model paths file; will not check source code at runtime");
+            simSourceDirs = null;
         }
-        List<File> inVCS_SimCodeDirs = getPathConstituents(inVCS_SimCodePath);
-        if (inVCS_SimCodeDirs == null) {
-        	throw new ModelVersioningException("Invalid in-VCS sim code path specified in "
-        									   + IN_VCS_PATH_PROPERTY + " property");
+        else {
+            simSourceDirs = getPathConstituents(simSourcePath);
+            if (simSourceDirs == null) {
+                throw new ModelVersioningException("Invalid sim source path specified in "
+                                                   + SIM_SOURCE_PATH_PROPERTY + " property");
+            }
         }
 
-        return createAssistantInternal(modelVersionFile, inVCS_SimCodeDirs);
+        return createAssistantInternal(modelVersionFile, simSourceDirs);
 
     }
     
@@ -270,12 +278,12 @@ public abstract class ModelVersioningAssistant {
      */
     static ModelVersioningAssistant createAssistantInternal(String simCodePath) {
 
-    	List<File> simCodeDirs = new LinkedList<File>();
-    	simCodeDirs.add(new File(simCodePath));
-    	
-    	return createAssistantInternal(new File(simCodePath + File.separator + VERSION_FILE_NAME),
-    								   simCodeDirs);
-    	
+        List<File> simCodeDirs = new LinkedList<File>();
+        simCodeDirs.add(new File(simCodePath));
+        
+        return createAssistantInternal(new File(simCodePath + File.separator + VERSION_FILE_NAME),
+                                       simCodeDirs);
+        
     }
 
     /*
@@ -286,9 +294,9 @@ public abstract class ModelVersioningAssistant {
      * in a build process.
      */
     static ModelVersioningAssistant createAssistantInternal(
-    										File modelVersionFile,
-                                            List<File> inVCS_SimCodeDirs) {
-   	       
+                                            File modelVersionFile,
+                                            List<File> simSourceDirs) {
+              
         // Set up properties from file and check format   
         PropertiesConfiguration versionProps;
 
@@ -315,17 +323,17 @@ public abstract class ModelVersioningAssistant {
         }
 
         if (vcs == VersionControlSystem.NONE) {
-            return new ModelVersioningAssistantNoVCS(inVCS_SimCodeDirs,
+            return new ModelVersioningAssistantNoVCS(simSourceDirs,
                                                      modelVersionFile,
                                                      versionProps);
         }
         else if (vcs == VersionControlSystem.SVN_TIGRIS_ONLY_CLIENT) {
-            return new ModelVersioningAssistantSVN_Tigris(inVCS_SimCodeDirs,
+            return new ModelVersioningAssistantSVN_Tigris(simSourceDirs,
                                                           modelVersionFile,
-                                			  versionProps);
+                                              versionProps);
         }
         else if (vcs == VersionControlSystem.SVN_APACHE_CLIENT) {
-            return new ModelVersioningAssistantSVN_Apache(inVCS_SimCodeDirs,
+            return new ModelVersioningAssistantSVN_Apache(simSourceDirs,
                                                           modelVersionFile,
                                                           versionProps);
         }
@@ -337,10 +345,10 @@ public abstract class ModelVersioningAssistant {
     /*
      * Get path to model version file by checking through sim code dirs for it.
      */
-    static File getModelVersionFile(List<File> simCodeDirs) {
+    static File getModelVersionFile(List<File> simSourceDirs) {
 
-    	File modelVersionFile = null;
-        for (File pathDir : simCodeDirs) {
+        File modelVersionFile = null;
+        for (File pathDir : simSourceDirs) {
             logger.trace("Searching " + pathDir.getAbsolutePath() + " for model version file");
             File checkFile = new File(pathDir + File.separator + VERSION_FILE_NAME);
             if (checkFile.exists()) {
@@ -350,7 +358,7 @@ public abstract class ModelVersioningAssistant {
             }
         }
         
-        return modelVersionFile;			// Returns null if not found
+        return modelVersionFile;            // Returns null if not found
 
     }
     
@@ -399,7 +407,7 @@ public abstract class ModelVersioningAssistant {
 
     // ************************* Instance Fields ***************************************
 
-    final List<File> inVCS_SimCodeDirs;         // Sim source code dirs
+    final List<File> simSourceDirs;             // Sim source code dirs
     private final File modelVersionFile;        // Stored to save recomputing
     private final PropertiesConfiguration versionProps;
     final String simSourceHash;                 // Hash of code at instantiation
@@ -410,22 +418,27 @@ public abstract class ModelVersioningAssistant {
     /*
      * Non-public constructor (for use by factory method and same-package subclasses)
      */
-    ModelVersioningAssistant(List<File> inVCS_SimCodeDirs,
-			     File modelVersionFile,
-            		     PropertiesConfiguration versionProps) {
+    ModelVersioningAssistant(List<File> simSourceDirs,
+                             File modelVersionFile,
+                             PropertiesConfiguration versionProps) {
 
         assert modelVersionFile != null && modelVersionFile.exists();
-    	// Assume file lists are all good as set up in static methods
+        // Assume file lists are all good as set up in static methods
         assert versionProps != null;
-        this.inVCS_SimCodeDirs = inVCS_SimCodeDirs;
+        this.simSourceDirs = simSourceDirs;
         this.modelVersionFile = modelVersionFile;
         this.versionProps = versionProps;
-        this.simSourceHash = calcMD5HashForFileList(
-                                    inVCS_SimCodeDirs,  // Paths
-                                    false,              // No hidden files
-                                    null,               // No File exclusions
+        if (simSourceDirs == null) {
+            this.simSourceHash = null;
+        }
+        else {
+            this.simSourceHash = calcMD5HashForFileList(
+                                    simSourceDirs,      // Paths
+                                    false,              // Exclude hidden files (i.e. .svn folders)
+                                    new File[] { modelVersionFile },  // Exclude model version file
                                     null,               // No filename exclusions
                                     true);              // Print files included
+        }
 
     }
     
@@ -472,27 +485,37 @@ public abstract class ModelVersioningAssistant {
 
     /**
      * Returns whether the model's sim code has local modifications from the
-     * version checked-out or exported from a VCS (as reported in the model
-     * version file).
-     * <p>
-     * Returns "Yes", "No" or "Unknown" (the latter if the model has never been
-     * JSIT-committed or the user didn't specify sim code directories, typically
-     * when running binaries of the simulation.
+     * version checksummed at commit time (as reported in the model
+     * version file; this includes not-in-VCS files in those folders).
+     * 
+     * @return A ModificationStatus value as used by RunEnvironmentSettings (and included
+     * in the model settings file).
      */
     public ModificationStatus simHasLocalModifications() {
 
-    	if (inVCS_SimCodeDirs == null) {
-    		return ModificationStatus.UNKNOWN;
-    	}
-    	
+        if (simSourceDirs == null) {
+            return ModificationStatus.UNKNOWN_NO_CHECK;
+        }
+        
         if (simHasBeenJSIT_Committed()) {
-            String modelHash = versionProps.getString(MODEL_HASH_PROPERTY);
-            logger.debug("Got model hash " + modelHash + " from XML");
-            return modelHash.equals(simSourceHash)
-                             ? ModificationStatus.YES : ModificationStatus.NO;        
+            boolean someSourceCheckedOut = hasCheckedOutDir(simSourceDirs);
+            if (someSourceCheckedOut) {
+                if (hasCheckedOutDirWithChanges(simSourceDirs)) {
+                    return ModificationStatus.YES_IN_CHECKED_OUT;
+                }
+            }           
+            String commitTimeSourceHash = versionProps.getString(SOURCE_DIRS_HASH_PROPERTY);
+            logger.debug("Got commit-time source dirs hash " + commitTimeSourceHash + " from XML");
+            if (commitTimeSourceHash.equals(simSourceHash)) {
+                return ModificationStatus.NO;
+            }
+            else {
+                return someSourceCheckedOut ? ModificationStatus.YES_IN_NON_VCS
+                                            : ModificationStatus.YES_NO_VCS_METADATA;
+            }
         }
         else {           
-            return ModificationStatus.UNKNOWN; 		// Can't tell otherwise
+            return ModificationStatus.UNKNOWN_NO_COMMIT;
         }
 
     }
@@ -516,13 +539,14 @@ public abstract class ModelVersioningAssistant {
      * Subclass-required VCS-specific method as to whether code in a directory is checked
      * out or not.
      */
-    abstract boolean codeIsCheckedOut(File codeDir);
+    abstract boolean dirIsCheckedOut(File checkDir);
 
     /*
-     * Subclass-required VCS-specific method as to whether the checked-out code has
-     * been changed. (Should only be called if codeIsCheckedOut returned true.)
+     * Subclass-required VCS-specific method as to whether the list of directories given
+     * has at least one checked-out directory with changes (i.e., there is something to
+     * commit in there).
      */
-    abstract boolean checkedOutCodeHasBeenChanged(List<File> checkDirs);
+    abstract boolean hasCheckedOutDirWithChanges(List<File> checkDirs);
 
     /*
      * Subclass-required VCS-specific method to do the actual commit (given change
@@ -566,28 +590,33 @@ public abstract class ModelVersioningAssistant {
      * "." when running via main) for ease of testing, since it's not possible to
      * directly change the current working directory.
      */
-    boolean commitModelMaterial(File sourceRootDir) {
-    	
-    	assert sourceRootDir.isDirectory();
-        if (!codeIsCheckedOut(sourceRootDir)) {
-            throw new VersionControlException("Model code is not checked-out!");
+    boolean commitModelMaterial(File commitRootDir) {
+        
+        assert simSourceDirs != null;
+        
+        // TODO: Check that the sim source dirs are all under this commit root and
+        // that at least one is checked-out as well (could be sparse check-out)
+        
+        assert commitRootDir.isDirectory();
+        if (!dirIsCheckedOut(commitRootDir)) {
+            throw new VersionControlException("Model material to commit is not checked-out!");
         }
 
-        File workingChangesFile = new File(sourceRootDir.getAbsolutePath()
+        File workingChangesFile = new File(commitRootDir.getAbsolutePath()
                                         + File.separator + WORKING_CHANGES_FILE);
-        File prevChangesFile = new File(sourceRootDir.getAbsolutePath()
+        File prevChangesFile = new File(commitRootDir.getAbsolutePath()
                                         + File.separator + PREV_CHANGES_FILE);
         String changeNotes;
 
         List<File> checkDirs = new LinkedList<File>();
-        checkDirs.add(sourceRootDir);
-        if (checkedOutCodeHasBeenChanged(checkDirs)) {
+        checkDirs.add(commitRootDir);
+        if (hasCheckedOutDirWithChanges(checkDirs)) {
             logger.debug("Checked-out code in root has been changed");
             changeNotes = getChangeNotes(workingChangesFile);
         }
         else {
             if (simHasBeenJSIT_Committed()) {
-            	logger.debug("No code changes and already JSIT committed; nothing to do");
+                logger.debug("No code changes and already JSIT committed; nothing to do");
                 return false;                   // Nothing to commit
             }
             logger.debug("First JSIT commit");
@@ -651,19 +680,19 @@ public abstract class ModelVersioningAssistant {
         }
 
         File tempPropsFile = null;
-        if (!simHasBeenJSIT_Committed() || checkedOutCodeHasBeenChanged(inVCS_SimCodeDirs)) {
+        if (!simHasBeenJSIT_Committed() || hasCheckedOutDirWithChanges(simSourceDirs)) {
             // Backup the properties file
             tempPropsFile = new File(getModelVersionFileBackupPath());
             saveProperties(tempPropsFile);
-            versionProps.setProperty(MODEL_HASH_PROPERTY, simSourceHash);
-            logger.info("Updated MD5 hash for simulation in-VCS source to "
-                        + versionProps.getProperty(MODEL_HASH_PROPERTY));
+            versionProps.setProperty(SOURCE_DIRS_HASH_PROPERTY, simSourceHash);
+            logger.info("Updated MD5 hash for simulation source dirs to "
+                        + versionProps.getProperty(SOURCE_DIRS_HASH_PROPERTY));
             versionProps.setProperty(COMMIT_TIME_PROPERTY, commitTime);
             saveProperties();
         }
 
         try {
-            doCommit(sourceRootDir, changeNotes);
+            doCommit(commitRootDir, changeNotes);
         }
         catch (Throwable t) {       // Restore properties file on any problem
             if (tempPrevFile != null) {
@@ -704,9 +733,9 @@ public abstract class ModelVersioningAssistant {
     }
     
     String getModelVersionFilePath() {
-    	
-    	return modelVersionFile.getAbsolutePath();
-    	
+        
+        return modelVersionFile.getAbsolutePath();
+        
     }
     
     String getModelVersionFileBackupPath() {
@@ -721,10 +750,10 @@ public abstract class ModelVersioningAssistant {
         
     }
     
-    String getCommittedCodeHash() {
-    	
-    	return versionProps.getString(MODEL_HASH_PROPERTY);
-    	
+    String getCommitTimeSourceDirsHash() {
+        
+        return versionProps.getString(SOURCE_DIRS_HASH_PROPERTY);
+        
     }
 
     /*
@@ -735,7 +764,7 @@ public abstract class ModelVersioningAssistant {
      */
     boolean simHasBeenJSIT_Committed() {
 
-        return versionProps.containsKey(MODEL_HASH_PROPERTY);
+        return versionProps.containsKey(SOURCE_DIRS_HASH_PROPERTY);
 
     }   
 
@@ -761,16 +790,19 @@ public abstract class ModelVersioningAssistant {
         ArrayList<LibraryDetail> librariesDetail = new ArrayList<LibraryDetail>();
         
         for (File f : fileList) {
-        	String currName = f.getName();
-        	if (currName.endsWith(".jar") || currName.endsWith(".JAR")) {
-        		logger.info("\t{}", currName);
-        		if (isInDirectoryList(inVCS_SimCodeDirs, f)) {
-            		librariesDetail.add(new LibraryDetail(f.getName(), true));
-            	}
-            	else {
-            		librariesDetail.add(new LibraryDetail(f.getName(), false));
-            	}
-        	}
+            String currName = f.getName();
+            if (currName.endsWith(".jar") || currName.endsWith(".JAR")) {
+                logger.info("\t{}", currName);
+                if (simSourceDirs == null) {
+                    librariesDetail.add(new LibraryDetail(f.getName(), PartOfSimSource.UNKNOWN));
+                }
+                else if (isInDirectoryList(simSourceDirs, f)) {
+                    librariesDetail.add(new LibraryDetail(f.getName(), PartOfSimSource.YES));
+                }
+                else {
+                    librariesDetail.add(new LibraryDetail(f.getName(), PartOfSimSource.NO));
+                }
+            }
         }
         
         return librariesDetail.toArray(new LibraryDetail[librariesDetail.size()]);
@@ -789,10 +821,10 @@ public abstract class ModelVersioningAssistant {
      * http://stackoverflow.com/questions/8930859.
      */
     String calcMD5HashForFileList(List<File> pathsToHash,
-            			  boolean includeHiddenFiles,
-            			  File[] fileExclusions,
-            			  String[] filenameExclusions,
-            			  boolean printFileNames) {
+                          boolean includeHiddenFiles,
+                          File[] fileExclusions,
+                          String[] filenameExclusions,
+                          boolean printFileNames) {
 
         Vector<FileInputStream> fileStreams = new Vector<FileInputStream>();
         ArrayList<File> workingFileExcludeList = null;
@@ -810,29 +842,29 @@ public abstract class ModelVersioningAssistant {
                 }
             }
             for (File currPath : pathsToHash) {
-            	assert currPath.exists();
-            	if (currPath.isDirectory()) {
-            	    collectInputStreams(currPath,
-            	                        fileStreams,
-            	                        workingFileExcludeList,
-            	                        filenameExclusions,
-            	                        includeHiddenFiles,
-            	                        printFileNames);
-            	}
-            	else if (currPath.isFile()) {
-            	    if (printFileNames) {
-            	        logger.info("\t" + currPath.getAbsolutePath());
+                assert currPath.exists();
+                if (currPath.isDirectory()) {
+                    collectInputStreams(currPath,
+                                        fileStreams,
+                                        workingFileExcludeList,
+                                        filenameExclusions,
+                                        includeHiddenFiles,
+                                        printFileNames);
+                }
+                else if (currPath.isFile()) {
+                    if (printFileNames) {
+                        logger.info("\t" + currPath.getAbsolutePath());
                     }
-            	    if (!fileIsExcluded(includeHiddenFiles,
-            		                workingFileExcludeList,
-            				filenameExclusions,
-            				currPath)) {
-            		fileStreams.add(new FileInputStream(currPath));
-            	    }           		
-            	}
-            	else {
-            	    assert false;	// Should never happen!
-            	}
+                    if (!fileIsExcluded(includeHiddenFiles,
+                                    workingFileExcludeList,
+                            filenameExclusions,
+                            currPath)) {
+                    fileStreams.add(new FileInputStream(currPath));
+                    }                   
+                }
+                else {
+                    assert false;    // Should never happen!
+                }
             }
             
             SequenceInputStream seqStream = 
@@ -940,7 +972,7 @@ public abstract class ModelVersioningAssistant {
         }
 
         StringBuilder changeNotesBuilder
-        					= new StringBuilder((int) changeNotesFile.length());
+                            = new StringBuilder((int) changeNotesFile.length());
         try {
             Scanner fileScanner = new Scanner(changeNotesFile);
             while (fileScanner.hasNext()) {
@@ -1009,9 +1041,9 @@ public abstract class ModelVersioningAssistant {
             if (fileIsExcluded(includeHiddenFiles, fileExclusions, filenameExclusions, f)) {
                 // Skip it
             }
-            else if (f.isDirectory()) {		// Recurse
+            else if (f.isDirectory()) {        // Recurse
                 collectInputStreams(f, foundStreams, fileExclusions,
-                					filenameExclusions, includeHiddenFiles, printFileNames);
+                                    filenameExclusions, includeHiddenFiles, printFileNames);
             }
             else {
                 try {
@@ -1061,7 +1093,20 @@ public abstract class ModelVersioningAssistant {
 
     }
     
-
+    /*
+     * Helper method to check that >0 of a list of dirs is checked-out 
+     */
+    private boolean hasCheckedOutDir(List<File> checkDirs) {
+        
+        for (File checkDir : checkDirs) {
+            assert checkDir.isDirectory();
+            if (dirIsCheckedOut(checkDir)) {
+                return true;
+            }
+        }
+        return false;
+        
+    }
 
 
 }

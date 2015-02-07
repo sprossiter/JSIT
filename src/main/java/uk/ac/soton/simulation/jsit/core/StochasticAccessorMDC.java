@@ -29,7 +29,7 @@ import org.slf4j.*;
  * 
  * @author Stuart Rossiter
  * @since 0.2
- */	
+ */    
 public class StochasticAccessorMDC<S extends StochasticItem>
                     extends AbstractStochasticAccessor<S>
                     implements Serializable {
@@ -62,9 +62,9 @@ public class StochasticAccessorMDC<S extends StochasticItem>
                     + " accessor for run ID " + runID);
         }
 
-        stochItem.registerAccessor(this);				// Needed before registering with initialiser
+        stochItem.registerAccessor(this);                // Needed before registering with initialiser
         Sampler sampler = ModelInitialiser.getInitialiserForRunViaMDC().registerStochItem(stochItem);
-        stochItem.registerSampler(sampler);				// Complete registration of stoch item
+        stochItem.registerSampler(sampler);                // Complete registration of stoch item
         itemsPerRun.put(runID, stochItem);
 
     }

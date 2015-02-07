@@ -36,7 +36,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 @SuppressWarnings({ "rawtypes", "unchecked" })
 class MultiDimEnumMap<V> {
 
@@ -66,18 +66,18 @@ class MultiDimEnumMap<V> {
             writer.startNode("values");
             for (Object d : m.getAllValues()) {
                 writer.startNode("entry");
-                if (d == null) {		// Nulls possible
+                if (d == null) {        // Nulls possible
                     logger.debug("  Null");
-                    writer.addAttribute("type", "null");					
+                    writer.addAttribute("type", "null");                    
                 }
                 else {
                     assert d instanceof Distribution;
                     logger.debug("  Distribution " + d.toString());
                     writer.addAttribute("type", d.getClass().getSimpleName());
-                    context.convertAnother(d);		// As per dist class serialisation
+                    context.convertAnother(d);        // As per dist class serialisation
                 }
                 writer.endNode();
-            }			
+            }            
             writer.endNode();   
         }
 
@@ -128,12 +128,12 @@ class MultiDimEnumMap<V> {
                 if (dimEnumClasses[i].getEnumConstants().length == 0) {
                     throw new IllegalArgumentException("Dimension category " + (i+1) + " has no values");
                 }
-            }    		
-            dims.add(dimEnumClasses[i]);	
+            }            
+            dims.add(dimEnumClasses[i]);    
         }
 
         this.multiDimEnumMap = createNullFilledMap(dimEnumClasses[0]);
-        for (int i = 1; i < dimEnumClasses.length; i++) {   	
+        for (int i = 1; i < dimEnumClasses.length; i++) {       
             // Create new dim array and add copies of it to all current 'leaf nodes' via recursion
             EnumMap newDimMaster = createNullFilledMap(dimEnumClasses[i]);
             walkOrAddDim(multiDimEnumMap, newDimMaster);
@@ -204,10 +204,10 @@ class MultiDimEnumMap<V> {
 
         for (Object currKey : currSubMap.keySet()) {
             Object currEntry = currSubMap.get(currKey);
-            if (currEntry == null) {		// At a 'leaf node'; add new dim array
-                currSubMap.put(currKey, newDimMaster.clone());		// Shallow copy is fine for null array
+            if (currEntry == null) {        // At a 'leaf node'; add new dim array
+                currSubMap.put(currKey, newDimMaster.clone());        // Shallow copy is fine for null array
             }
-            else {							// Recurse through next dimension
+            else {                            // Recurse through next dimension
                 assert currEntry instanceof EnumMap;
                 walkOrAddDim((EnumMap) currEntry, newDimMaster);
             }
@@ -219,17 +219,17 @@ class MultiDimEnumMap<V> {
 
         for (Object currKey : currSubMap.keySet()) {
             Object currEntry = currSubMap.get(currKey);
-            if (currEntry == null) {						// Dist not yet added
+            if (currEntry == null) {                        // Dist not yet added
                 content.append("null, ");
             }
-            else if (currEntry instanceof EnumMap) {		// Recurse through next dimension
+            else if (currEntry instanceof EnumMap) {        // Recurse through next dimension
                 walkOrPrintDist((EnumMap) currEntry, content);
             }
-            else  {											// At a 'leaf node'; add to string rep
-                content.append(currEntry.toString());   			
+            else  {                                            // At a 'leaf node'; add to string rep
+                content.append(currEntry.toString());               
                 content.append(", ");
-            }			
-        }  	
+            }            
+        }      
 
     }
 
@@ -237,16 +237,16 @@ class MultiDimEnumMap<V> {
 
         for (Object currKey : currSubMap.keySet()) {
             Object currEntry = currSubMap.get(currKey);
-            if (currEntry == null) {						// Dist not yet added
+            if (currEntry == null) {                        // Dist not yet added
                 entriesList.add(null);
             }
-            else if (currEntry instanceof EnumMap) {		// Recurse through next dimension
+            else if (currEntry instanceof EnumMap) {        // Recurse through next dimension
                 walkOrGatherEntries((EnumMap) currEntry, entriesList);
             }
-            else  {											// At a 'leaf node'; add to string rep
+            else  {                                            // At a 'leaf node'; add to string rep
                 entriesList.add((V) currEntry);
-            }			
-        }  	
+            }            
+        }      
 
     }
 
@@ -260,13 +260,13 @@ class MultiDimEnumMap<V> {
                                   int currLocationIdx,
                                   V leafObj) {
 
-        if (currLocationIdx == newObjLocation.length - 1) {			// We've got to our slot
+        if (currLocationIdx == newObjLocation.length - 1) {            // We've got to our slot
             currSubMap.put(newObjLocation[newObjLocation.length - 1], leafObj);
         }
-        else {														// Recurse to the appropriate sub-array
+        else {                                                        // Recurse to the appropriate sub-array
             walkOrAddLeafObj((EnumMap) currSubMap.get(newObjLocation[currLocationIdx]),
                     newObjLocation, ++currLocationIdx, leafObj);
-        }   	
+        }       
 
     }
 
@@ -274,13 +274,13 @@ class MultiDimEnumMap<V> {
                                Object[] reqObjLocation,
                                int currLocationIdx) {
 
-        if (currLocationIdx == reqObjLocation.length - 1) {			// We've got to our slot
+        if (currLocationIdx == reqObjLocation.length - 1) {            // We've got to our slot
             return (V) currSubMap.get(reqObjLocation[reqObjLocation.length - 1]);
         }
-        else {														// Recurse to the appropriate sub-array
+        else {                                                        // Recurse to the appropriate sub-array
             return walkOrGetLeafObj((EnumMap) currSubMap.get(reqObjLocation[currLocationIdx]),
                     reqObjLocation, ++currLocationIdx);
-        }   	
+        }       
 
     }
 

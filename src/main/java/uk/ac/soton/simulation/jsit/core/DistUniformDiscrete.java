@@ -29,14 +29,14 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistUniformDiscrete<C extends Enum<C>>
                 extends DistributionCategorical<C> implements Serializable {
 
     // ************************** Static Fields ***************************************
 
     //private static final Logger logger = LoggerFactory.getLogger(
-    //						DistUniformDiscrete.class);
+    //                        DistUniformDiscrete.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -61,7 +61,7 @@ public class DistUniformDiscrete<C extends Enum<C>>
     public DistUniformDiscrete(int min, int max) {
 
         super(max - min + 1);
-        setRange(min, max);  	
+        setRange(min, max);      
 
     }
 
@@ -71,8 +71,8 @@ public class DistUniformDiscrete<C extends Enum<C>>
     public void setRange(int min, int max) {
 
         clearRanges(max - min + 1);
-        if (min != 1) {				// No range needed if min == 1; returns 'raw' 1-max 		
-            addRange(min, max);			// Add range to superclass
+        if (min != 1) {                // No range needed if min == 1; returns 'raw' 1-max         
+            addRange(min, max);            // Add range to superclass
         }
 
     }
@@ -86,7 +86,7 @@ public class DistUniformDiscrete<C extends Enum<C>>
             stringRep = "DiscreteUniform(" + getCategory().getSimpleName() + ")";
         }
         else {
-            Range r = getSubRange(0);	// Always only 1 range
+            Range r = getSubRange(0);    // Always only 1 range
             if (r == null) {
                 stringRep = "DiscreteUniform(1," + getK() + ")";
             }
@@ -111,8 +111,8 @@ public class DistUniformDiscrete<C extends Enum<C>>
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleUniformDiscrete(getK());
         }
-        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {   		
-            sample = (1 + getK()) / 2;			// Truncate if odd
+        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {           
+            sample = (1 + getK()) / 2;            // Truncate if odd
         }
 
         return sample;

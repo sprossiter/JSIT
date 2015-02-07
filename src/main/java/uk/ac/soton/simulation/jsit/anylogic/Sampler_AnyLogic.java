@@ -30,7 +30,7 @@ import uk.ac.soton.simulation.jsit.core.Sampler;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class Sampler_AnyLogic extends Sampler implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -49,7 +49,7 @@ public class Sampler_AnyLogic extends Sampler implements Serializable {
     @Override
     protected boolean distIsSupported(Distribution dist) {
 
-        return true;			// Always true for current set of dists
+        return true;            // Always true for current set of dists
 
     }
 

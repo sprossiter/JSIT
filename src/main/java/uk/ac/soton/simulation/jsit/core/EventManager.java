@@ -109,7 +109,7 @@ public class EventManager {
             for (EventReceiver r : receivers) {
                 r.notifyOfEvent(source);
             }
-        }		
+        }        
 
     }
 

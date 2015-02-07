@@ -21,8 +21,10 @@ rem   You should have received a copy of the GNU Lesser General Public License
 rem   along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
 rem******************************************************************************
 rem
-rem Replace Core with the path to your model core code directory
-rem relative to the location of this script.
+rem Replace Sim\Libs with the path to the JSIT libraries directory.
+rem Replace Sim with the path to your model source directories (see the JSIT
+rem User Guide). This can include multiple directories separated by semi-colons
+rem as in a standard Windows path. (Use double quotes if there are spaces.)
 rem
 rem NB: There is a bug in some versions of Java pre 7u10 where the
 rem wildcard expansion in the -cp bit doesn't work properly. (You get
@@ -30,8 +32,8 @@ rem a "failure to find main class in X" type error.) Upgrade your Java
 rem installation to 7u10 or beyond to fix it. See
 rem http://superuser.com/questions/773660.
 rem
-java -cp "Core\lib\*" ^
-uk.ac.soton.simulation.jsit.core.ModelVersioningAssistant COMMIT Core
+java -cp "Sim\Libs\*" ^
+uk.ac.soton.simulation.jsit.core.ModelVersioningAssistant COMMIT Sim
 echo -------------------------------------------------------
 echo Commit complete (check for errors above). Press any key
 pause

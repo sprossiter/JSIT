@@ -34,7 +34,7 @@ import java.util.*;
  * 
  * @author Stuart Rossiter
  * @since 0.2
- */	
+ */    
 public class StochasticAccessorAnyLogic<S extends StochasticItem>
                 extends AbstractStochasticAccessor<S>
                 implements Serializable {
@@ -45,36 +45,36 @@ public class StochasticAccessorAnyLogic<S extends StochasticItem>
 
     // 'Optimise' for non-parallel experiments
     private final Hashtable<MainModel_AnyLogic, S> itemsPerRun
-                            = new Hashtable<MainModel_AnyLogic, S>(1);		
+                            = new Hashtable<MainModel_AnyLogic, S>(1);        
    
-	
+    
     public StochasticAccessorAnyLogic(Class<?> owner, String id) {
-    	
+        
         super(owner, id);
-    	
+        
     }
     
     /*
      * Thread-safe via use of MDC and Hashtable
      */
     public void addForRun(MainModel_AnyLogic mainModel, S stochItem) {
-    	
+        
         if (mainModel == null || stochItem == null) {
             throw new IllegalArgumentException(
               "Must add stochastic item with non-null main model and item");
         }
-    	if (itemsPerRun.containsKey(mainModel)) {
-    		throw new IllegalArgumentException(
-    		        "Stochastic item already added to " + getFullID()
-    			+ " accessor for run ID "
-    			+ mainModel.getModelInitialiser().getRunID());
-    	}
-    	
-    	stochItem.registerAccessor(this);	// Needed before registering with initialiser
-    	Sampler sampler = ModelInitialiser.getInitialiserForRunViaMDC().registerStochItem(stochItem);
-    	stochItem.registerSampler(sampler);	// Complete registration of stoch item
-    	itemsPerRun.put(mainModel, stochItem);
-    	
+        if (itemsPerRun.containsKey(mainModel)) {
+            throw new IllegalArgumentException(
+                    "Stochastic item already added to " + getFullID()
+                + " accessor for run ID "
+                + mainModel.getModelInitialiser().getRunID());
+        }
+        
+        stochItem.registerAccessor(this);    // Needed before registering with initialiser
+        Sampler sampler = ModelInitialiser.getInitialiserForRunViaMDC().registerStochItem(stochItem);
+        stochItem.registerSampler(sampler);    // Complete registration of stoch item
+        itemsPerRun.put(mainModel, stochItem);
+        
     }
 
     /*
@@ -96,7 +96,7 @@ public class StochasticAccessorAnyLogic<S extends StochasticItem>
         return stochItem;
 
     }
-	
+    
     /**
      * Done at end of a run. Thread-safe via use of Hashtable. Can't use S
      * as parameter type: causes problems since calling code doesn't always know the
@@ -125,5 +125,5 @@ public class StochasticAccessorAnyLogic<S extends StochasticItem>
         }
 
     }
-	
+    
 }

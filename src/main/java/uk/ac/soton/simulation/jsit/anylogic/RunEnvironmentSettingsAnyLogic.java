@@ -46,7 +46,7 @@ class RunEnvironmentSettingsAnyLogic extends RunEnvironmentSettings {
     // Package-access just to prevent compiler non-use warnings
 
     final RandomnessSettings randomnessSettings;
-    final String anyLogicVersion = "UNKNOWN";		// No API to get it. TODO: get from .alp file header
+    final String anyLogicVersion = "UNKNOWN";        // No API to get it. TODO: get from .alp file header
 
 
     // ************************** Constructors *****************************************

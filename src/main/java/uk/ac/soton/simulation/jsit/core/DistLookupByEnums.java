@@ -33,14 +33,14 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistLookupByEnums<D extends Distribution>
                     extends StochasticItem implements Serializable {
 
     // ************************ Static Fields *****************************************
 
     //private static final Logger logger
-    //		= LoggerFactory.getLogger(DistLookupByEnums.class.getCanonicalName());
+    //        = LoggerFactory.getLogger(DistLookupByEnums.class.getCanonicalName());
 
     private static final long serialVersionUID = 1L;
 
@@ -126,7 +126,7 @@ public class DistLookupByEnums<D extends Distribution>
 
         List<D> allDists = getAllDists();
         for (D dist : allDists) {
-            if (dist != null) {				// May be null entries
+            if (dist != null) {                // May be null entries
                 dist.registerAccessor(accessor);
             }
         }
@@ -143,7 +143,7 @@ public class DistLookupByEnums<D extends Distribution>
 
         List<D> allDists = getAllDists();
         for (D dist : allDists) {
-            if (dist != null) {				// May be null entries
+            if (dist != null) {                // May be null entries
                 dist.registerSampler(sampler);
             }
         }

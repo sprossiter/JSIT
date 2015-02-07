@@ -56,7 +56,7 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
      */
     ModelVersioningAssistantSVN(List<File> inVCS_SimCodePath,
                                 File modelVersionFile,
-    				PropertiesConfiguration versionProps) {
+                    PropertiesConfiguration versionProps) {
 
         super(inVCS_SimCodePath, modelVersionFile, versionProps);
 
@@ -132,7 +132,7 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
      * getModelSVN_Rev()).
      */
     @Override
-    boolean codeIsCheckedOut(File codeDir) {
+    boolean dirIsCheckedOut(File codeDir) {
 
         return (getCodeDir_SVN_Rev(codeDir) != null);
 
@@ -144,15 +144,16 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
      * to an 'empty' response to svn status).
      */
     @Override
-    boolean checkedOutCodeHasBeenChanged(List<File> checkDirs) {        
+    boolean hasCheckedOutDirWithChanges(List<File> checkDirs) {        
 
-    	for (File checkDir : checkDirs) {
-    		assert checkDir.isDirectory();
-    		String modelLocalRev = getCodeDir_SVN_Rev(checkDir);
-    		if (modelLocalRev.contains("M")) {
-    			return true;
-    		}
-    	}
+        for (File checkDir : checkDirs) {
+            assert checkDir.isDirectory();
+            String modelLocalRev = getCodeDir_SVN_Rev(checkDir);
+            // Null modelLocalRev if dir wasn't checked-out
+            if (modelLocalRev != null && modelLocalRev.contains("M")) {
+                return true;
+            }
+        }
         
         return false;
 
@@ -189,7 +190,7 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
 
         String rawVersionString = getRawSVN_Version(codeDir);
         logger.debug("Got raw SVN version " + rawVersionString
-        			 + " for " + codeDir.getAbsolutePath());
+                     + " for " + codeDir.getAbsolutePath());
 
         String[] outputParts = rawVersionString.split(":");
         if (outputParts.length == 1) {

@@ -29,13 +29,13 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistNormal extends DistributionContinuous implements Serializable {
 
     // ************************** Static Fields ***************************************
 
     //private static final Logger logger = LoggerFactory.getLogger(
-    //				DistNormal.class);
+    //                DistNormal.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -109,7 +109,7 @@ public class DistNormal extends DistributionContinuous implements Serializable {
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleNormal(mean, sd);
         }
-        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {   		
+        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {           
             sample = mean;
         }
 

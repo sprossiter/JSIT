@@ -30,14 +30,14 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistFixedContinuous extends DistributionContinuous
                                  implements Serializable {
 
     // ************************** Static Fields ***************************************
 
     //private static final Logger logger = LoggerFactory.getLogger(
-    //				DistFixedContinuous.class);
+    //                DistFixedContinuous.class);
 
     private static final long serialVersionUID = 1L;
 

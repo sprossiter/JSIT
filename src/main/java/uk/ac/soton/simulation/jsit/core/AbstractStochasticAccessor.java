@@ -39,24 +39,24 @@ public abstract class AbstractStochasticAccessor<S extends StochasticItem> imple
     private final String id;
     private final Class<?> owner;
     private Sampler.SampleMode mode = null;
-	
+    
     public AbstractStochasticAccessor(Class<?> owner, String id) {
-    	
-    	this.owner = owner;
-    	this.id = id;
-    	
+        
+        this.owner = owner;
+        this.id = id;
+        
     }
     
     public String getFullID() {
-    	
-    	return owner.getSimpleName() + "." + id;
-    	
+        
+        return owner.getSimpleName() + "." + id;
+        
     }
     
     public String getOwnerName() {
-    	
-    	return owner.getSimpleName();
-    	
+        
+        return owner.getSimpleName();
+        
     }
 
     /*
@@ -74,7 +74,7 @@ public abstract class AbstractStochasticAccessor<S extends StochasticItem> imple
      */
     synchronized Sampler.SampleMode getSampleMode() {
 
-        if (mode == null) {			// Main 'route' by which non-registered stoch item gets caught
+        if (mode == null) {            // Main 'route' by which non-registered stoch item gets caught
             throw new IllegalStateException("Stochastic item " + getFullID() + " not registered via an accessor");
         }
         return mode;
@@ -82,5 +82,5 @@ public abstract class AbstractStochasticAccessor<S extends StochasticItem> imple
     }
     
     public abstract void removeMe(StochasticItem stochItem);
-	
+    
 }

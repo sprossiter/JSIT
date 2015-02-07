@@ -27,7 +27,7 @@ import org.slf4j.*;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public abstract class DistributionDiscrete
                 extends Distribution implements Serializable {
 
@@ -67,7 +67,7 @@ public abstract class DistributionDiscrete
             throw new IllegalStateException("Distribution not registered");
         }
 
-        int sample = sampleIntByMode();		
+        int sample = sampleIntByMode();        
         if (logger.isTraceEnabled()) {
             logger.trace(accessor.getFullID() + " (Mode " + mode + "): sampled "
                     + sample + " from " + toString());

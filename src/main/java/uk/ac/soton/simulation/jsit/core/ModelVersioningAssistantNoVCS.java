@@ -37,7 +37,7 @@ public class ModelVersioningAssistantNoVCS extends ModelVersioningAssistant {
      */
     ModelVersioningAssistantNoVCS(List<File> inVCS_SimCodePath,
                                   File modelVersionFile,
-    				  PropertiesConfiguration versionProps) {
+                      PropertiesConfiguration versionProps) {
 
         super(inVCS_SimCodePath, modelVersionFile, versionProps);
 
@@ -49,7 +49,7 @@ public class ModelVersioningAssistantNoVCS extends ModelVersioningAssistant {
     @Override
     public String getLastCommitID() {
 
-        return getVersionProperties().getString(MODEL_HASH_PROPERTY);
+        return getVersionProperties().getString(SOURCE_DIRS_HASH_PROPERTY);
 
     }
 
@@ -57,7 +57,7 @@ public class ModelVersioningAssistantNoVCS extends ModelVersioningAssistant {
      * Code always considered 'checked-out' when no VCS.
      */
     @Override
-    boolean codeIsCheckedOut(File codeDir) {
+    boolean dirIsCheckedOut(File codeDir) {
 
         return true;
 
@@ -67,14 +67,13 @@ public class ModelVersioningAssistantNoVCS extends ModelVersioningAssistant {
      * This is only ever called for the commit 'root' or the sim
      * code directories (where the latter are under the former).
      * In both cases, the code counts as changed in this no-VCS
-     * case only if the sim code has changed (since that's all that's
-     * covered by the pseudo-VCS-rev hash).
+     * case if the checksum doesn't match.
      */
     @Override
-    boolean checkedOutCodeHasBeenChanged(List<File> checkDirs) {
+    boolean hasCheckedOutDirWithChanges(List<File> checkDirs) {
 
         if (simHasBeenJSIT_Committed()) {
-            return !simSourceHash.equals(getCommittedCodeHash());
+            return !simSourceHash.equals(getCommitTimeSourceDirsHash());
         }
         else {
             return false;    // Want it to be treated as a first JSIT commit
@@ -112,7 +111,7 @@ public class ModelVersioningAssistantNoVCS extends ModelVersioningAssistant {
     @Override
     boolean fileIsUnderVersionControl(File checkFile) {
 
-        return isInDirectoryList(inVCS_SimCodeDirs, checkFile);
+        return isInDirectoryList(simSourceDirs, checkFile);
 
     }
 

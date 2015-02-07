@@ -31,7 +31,7 @@ import java.util.*;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public abstract class DistributionCategorical<C extends Enum<C>>
                 extends DistributionDiscrete implements Serializable {
 
@@ -93,7 +93,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     protected DistributionCategorical(int k) {
 
-        super();		
+        super();        
         this.categoryEnumType = null;
         this.k = k;
 
@@ -115,7 +115,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
     @Override
     protected int sampleIntByMode() {
 
-        if (rangesEntries == 0) {			// No ranges; sample 'raw' 1-K int
+        if (rangesEntries == 0) {            // No ranges; sample 'raw' 1-K int
             return sampleOrdinalByMode();
         }
 
@@ -126,7 +126,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
         }
 
         Sampler.SampleMode mode = getAccessor().getSampleMode();
-        int rangeIdx = sampleOrdinalByMode();		// One-based
+        int rangeIdx = sampleOrdinalByMode();        // One-based
         if (logger.isTraceEnabled()) {
             logger.trace(getAccessor().getFullID() + " (Mode " + mode + "): mapping raw ordinal " + rangeIdx
                     + " to ranges (K=" + getK() + ")");
@@ -169,8 +169,8 @@ public abstract class DistributionCategorical<C extends Enum<C>>
                     "This distribution not defined to return a category");
         }
 
-        int enumIdx = sampleOrdinalByMode() - 1;		// Zero-based
-        C sample = categoryEnumType.getEnumConstants()[enumIdx];		
+        int enumIdx = sampleOrdinalByMode() - 1;        // Zero-based
+        C sample = categoryEnumType.getEnumConstants()[enumIdx];        
         if (logger.isTraceEnabled()) {
             logger.trace(accessor.getFullID() + " (Mode " + mode + "): sampled " + sample + " from " + toString());
         }
@@ -194,7 +194,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
             throw new IllegalArgumentException(
                     "Range causes alternatives to exceed K");
         }
-        if (ranges == null) {			// Lazy instantiation
+        if (ranges == null) {            // Lazy instantiation
             ranges = new LinkedList<Range>();
         }
         ranges.add(newRange);
@@ -216,7 +216,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     public void clearRanges() {
 
-        if (ranges != null) {		// Nothing to do otherwise	
+        if (ranges != null) {        // Nothing to do otherwise    
             ranges.clear();
             rangesEntries = 0;
         }

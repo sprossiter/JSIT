@@ -25,7 +25,7 @@ import ch.qos.logback.core.encoder.*;
 import ch.qos.logback.core.sift.*;
 
 import org.slf4j.*;
-import org.slf4j.Logger;		// To resolve ambiguity with Logback Logger
+import org.slf4j.Logger;        // To resolve ambiguity with Logback Logger
 
 import java.text.SimpleDateFormat;
 import java.text.DecimalFormat;
@@ -90,7 +90,7 @@ import com.thoughtworks.xstream.XStream;
  * @since 0.1
  */
 public abstract class ModelInitialiser {
-	
+    
     // ************************* Static Fields *****************************************
 
     private static final Logger logger
@@ -110,6 +110,7 @@ public abstract class ModelInitialiser {
     // Fixed MDC key names
     protected static final String RUN_ID_KEY = "runID";
     protected static final String RUN_NUM_KEY = "runNum";
+    protected static final String RUN_OUTPUTS_PATH_KEY = "runOutPath";
     protected static final String INIT_MAIN_MODEL_KEY = "initMain";
 
     // Number for the next run (updated and read in a synchronised block)
@@ -200,20 +201,20 @@ public abstract class ModelInitialiser {
                 msgBuffer.append(Thread.currentThread().getId());
                 msgBuffer.append(" ");
             }
-            if (formatType == LogFormatType.CONSOLE) {				
+            if (formatType == LogFormatType.CONSOLE) {                
                 msgBuffer.append("RUN ");
                 msgBuffer.append(MDC.get(ModelInitialiser.RUN_NUM_KEY));
                 msgBuffer.append(" ");
             }
-            if (formatType == LogFormatType.DIAGNOSTICS) {			
+            if (formatType == LogFormatType.DIAGNOSTICS) {            
                 msgBuffer.append(timeAccessor.getDiagnosticLogFormattedSimTime());
                 msgBuffer.append(" ");
                 String[] nameParts = event.getLoggerName().split("\\.");
-                msgBuffer.append(nameParts[nameParts.length - 1]);		// Last simple name
+                msgBuffer.append(nameParts[nameParts.length - 1]);        // Last simple name
             }
             else {
                 msgBuffer.append(timeAccessor.getEventsLogFormattedSimTime());
-            }		
+            }        
             if (formatType != LogFormatType.EVENTS) {
                 msgBuffer.append(" ");
                 msgBuffer.append(event.getLevel().toString());
@@ -264,43 +265,43 @@ public abstract class ModelInitialiser {
      * input parameters and then initialise the environment
      */
     public ModelInitialiser(String experimentName,
-    			    MainModel modelMain) {
-    	
-    	this.modelStartTime = System.currentTimeMillis();
-    	if (modelMain == null || experimentName == null || experimentName.trim().equals("")) {
-    		throw new IllegalArgumentException(
-    					"Must supply experiment name and main model instance");
-    	}
-    	
-    	this.experimentName = experimentName;
-        this.modelMain = modelMain;	
-    	
-    	String currPath = modelMain.getOutputsBasePath();
-    	if (currPath == null || currPath.trim().equals("")) {
+                    MainModel modelMain) {
+        
+        this.modelStartTime = System.currentTimeMillis();
+        if (modelMain == null || experimentName == null || experimentName.trim().equals("")) {
+            throw new IllegalArgumentException(
+                        "Must supply experiment name and main model instance");
+        }
+        
+        this.experimentName = experimentName;
+        this.modelMain = modelMain;    
+        
+        String currPath = modelMain.getOutputsBasePath();
+        if (currPath == null || currPath.trim().equals("")) {
             throw new IllegalArgumentException("Must supply outputs base path");
-        }   	
-    	File basePath = new File(currPath);
-    	if (!basePath.exists() || !basePath.canWrite()) {
-    		throw new IllegalArgumentException("Outputs base path " + currPath
-    										   + " must exist and be writeable");
-    	}
-    	
-    	currPath = modelMain.getInputsBasePath();
-    	if (currPath == null || currPath.trim().equals("")) {
+        }       
+        File basePath = new File(currPath);
+        if (!basePath.exists() || !basePath.canWrite()) {
+            throw new IllegalArgumentException("Outputs base path " + currPath
+                               + " must exist and be writeable");
+        }
+        
+        currPath = modelMain.getInputsBasePath();
+        if (currPath == null || currPath.trim().equals("")) {
             throw new IllegalArgumentException("Must supply inputs base paths");
         }
-    	basePath = new File(currPath);
-    	if (!basePath.exists() || !basePath.canRead()) {
-    		throw new IllegalArgumentException("Inputs base path " + currPath
-    										   + " must exist and be readable");
-    	}
-    	
-    	initialiseEnvironment();			// Initialise logging
-    	loadStochSettings();				// Load settings from stoch control file (if exists)
-    	
-    	// Store this initialiser for access by embedding/superclasses   	
-    	ModelInitialiser.perRunInitialisers.put(runID, this);
-    	
+        basePath = new File(currPath);
+        if (!basePath.exists() || !basePath.canRead()) {
+            throw new IllegalArgumentException("Inputs base path " + currPath
+                               + " must exist and be readable");
+        }
+        
+        initialiseEnvironment();   // Initialise logging
+        loadStochSettings();       // Load settings from stoch control file (if exists)
+        
+        // Store this initialiser for access by embedding/superclasses       
+        ModelInitialiser.perRunInitialisers.put(runID, this);
+        
     }
 
     
@@ -314,7 +315,7 @@ public abstract class ModelInitialiser {
 
         assert (runID != null && runNum != null && modelInitiator != null);
         String currThreadRunID = MDC.get(RUN_ID_KEY);
-        if (!runID.equals(currThreadRunID)) {		// LHS always non-null
+        if (!runID.equals(currThreadRunID)) {        // LHS always non-null
             setMDC_Keys();
             if (logger.isDebugEnabled()) {
                 logger.debug("Thread switch to {}. Replaced logging key {} with stored key {}",
@@ -332,20 +333,20 @@ public abstract class ModelInitialiser {
      * after instantiation so can (now) use existence in static list to determine
      */
     public boolean isModelInitiator(MainModel modelMain) {
-    	
-    	assert modelInitiator != null;
-    	return modelMain.getClass().getSimpleName().equals(modelInitiator);
-    	
+        
+        assert modelInitiator != null;
+        return modelMain.getClass().getSimpleName().equals(modelInitiator);
+        
     }
-  	
+      
     /*
      * Get elapsed model time
      */
     public String getElapsedTimeSecs() {
 
         double rawElapsedTimeSecs = (System.currentTimeMillis() - modelStartTime) / 1000.0;
-        DecimalFormat formatter = new DecimalFormat("0.00");		// Format as 2d.p.
-        formatter.setRoundingMode(java.math.RoundingMode.HALF_UP);	// 'School' rounding mode (default is half-even)
+        DecimalFormat formatter = new DecimalFormat("0.00");        // Format as 2d.p.
+        formatter.setRoundingMode(java.math.RoundingMode.HALF_UP);    // 'School' rounding mode (default is half-even)
         return formatter.format(rawElapsedTimeSecs);
 
     }
@@ -375,9 +376,9 @@ public abstract class ModelInitialiser {
     public void saveModelSettings() throws IOException {
 
         // Set up file and XStream instance. Ignore fields for stochastic items which relate
-    	// to their registration which hasn't happened yet and aren't related to the 'core'
-    	// object. (Stochastic items can be serialised at this point because they may be model
-    	// parameters.)
+        // to their registration which hasn't happened yet and aren't related to the 'core'
+        // object. (Stochastic items can be serialised at this point because they may be model
+        // parameters.)
         xstream = new XStream();
         xstream.omitField(StochasticItem.class, "accessor");
         xstream.omitField(StochasticItem.class, "sampler");
@@ -395,17 +396,20 @@ public abstract class ModelInitialiser {
         DistLookupByEnums.setupForInfoSerialisation(xstream);
         setupForInfoSerialisation(xstream);      // Allow subclass to setup as well      
         
-        settingsWriter = new BufferedWriter(new FileWriter(
-                new File(getOutputFilesBasePath() + "/" + SETTINGS_FILE)));
+        String settingsFilePath = getOutputFilesBasePath() + "/" + SETTINGS_FILE;
+        settingsWriter = new BufferedWriter(new FileWriter(new File(settingsFilePath)));
         boolean writtenOK = false;
 
         try {
             writeModelSettings(xstream, settingsWriter);
-            logger.info("Written model settings to " + SETTINGS_FILE);
+            logger.info("Written model settings to " + settingsFilePath);
             writtenOK = true;
         }
+        catch (IOException e) {
+            throw new IOException("I/O error writing " + settingsFilePath, e);
+        }
         finally {
-            if (!writtenOK) { 		// Otherwise keep it open for stochastic item info. writing
+            if (!writtenOK) {         // Otherwise keep it open for stochastic item info. writing
                 settingsWriter.close();
             }
         }
@@ -448,7 +452,7 @@ public abstract class ModelInitialiser {
                     xmlString.append("\n<stochasticItems>\n");
                 }           
                 xmlString.append("  <item id=\"" + stochItem.getAccessor().getFullID() + "\" sampleMode=\""
-                				 + stochItem.getAccessor().getSampleMode() + "\">\n");
+                                 + stochItem.getAccessor().getSampleMode() + "\">\n");
                 String[] itemLines = xstream.toXML(stochItem).split("\n");
                 for (String line : itemLines) {
                     xmlString.append("    ");
@@ -486,7 +490,7 @@ public abstract class ModelInitialiser {
      */
     public void onMainModelDestroy() {
     
-        logger.debug("Main model destruction processing for run ID " + MDC.get(RUN_ID_KEY));
+        logger.debug("Main model destruction processing for run ID " + runID);
         // Deregister (remove) any stoch items for the run
         for (StochasticItem stochItem : registeredStochItems) {
             if (logger.isDebugEnabled()) {
@@ -527,13 +531,13 @@ public abstract class ModelInitialiser {
             throw new IllegalStateException("Stochastic registrations already finalised by user");
         }
 
-        if (sampler == null) {		// Lazy instantiation (can't do in constructor because subclass not ready)
+        if (sampler == null) {        // Lazy instantiation (can't do in constructor because subclass not ready)
             sampler = createFrameworkSpecificSampler();
             assert sampler != null;
         }
 
-        String qualifiedID = stochItem.getAccessor().getFullID();	
-        String classAllID = stochItem.getAccessor().getOwnerName() + ".ALL";			
+        String qualifiedID = stochItem.getAccessor().getFullID();    
+        String classAllID = stochItem.getAccessor().getOwnerName() + ".ALL";            
         if (registeredStochItems.contains(stochItem)) {
             throw new IllegalArgumentException("Stochastic item " + qualifiedID
                     + " has already been registered, possibly by another class");
@@ -541,7 +545,7 @@ public abstract class ModelInitialiser {
 
         Sampler.SampleMode mode = Sampler.SampleMode.NORMAL;
 
-        if (stochSettings != null) {	// Calc mode using less to more specific filters
+        if (stochSettings != null) {    // Calc mode using less to more specific filters
             if (stochSettings.containsKey("ALL")) {
                 mode = Sampler.SampleMode.valueOf(stochSettings.getProperty("ALL"));
             }
@@ -557,7 +561,7 @@ public abstract class ModelInitialiser {
         registeredStochItems.add(stochItem);
 
         String logMsg = qualifiedID + " stochastic item " + stochItem.toString()
-                        + " set up for run ID " + MDC.get(RUN_ID_KEY);
+                        + " set up for run ID " + runID;
         if (mode == Sampler.SampleMode.NORMAL) {
             logger.info(logMsg);
         }
@@ -569,18 +573,19 @@ public abstract class ModelInitialiser {
 
     }
 
-	  
+      
     protected abstract void writeModelSettings(XStream xstream, BufferedWriter writer) throws IOException;
     protected abstract void setupForInfoSerialisation(XStream xstream);
     protected abstract Sampler createFrameworkSpecificSampler();
         
-  	
-  	// *************************** Private Instance Methods ****************************
+      
+      // *************************** Private Instance Methods ****************************
     
     private void setMDC_Keys() {
 
         MDC.put(ModelInitialiser.RUN_ID_KEY, runID);
         MDC.put(ModelInitialiser.RUN_NUM_KEY, runNum);
+        MDC.put(ModelInitialiser.RUN_OUTPUTS_PATH_KEY, getOutputFilesBasePath());
         MDC.put(ModelInitialiser.INIT_MAIN_MODEL_KEY, modelInitiator);
 
     }
@@ -591,14 +596,14 @@ public abstract class ModelInitialiser {
      */
     private void initialiseEnvironment() {
 
-        synchronized(ModelInitialiser.class) {			// Ensure parallel runs do this sequentially
+        synchronized(ModelInitialiser.class) {            // Ensure parallel runs do this sequentially
             this.runID = EXPERIMENT_START_TIME + "-" + experimentName + "-" + ModelInitialiser.nextRunNumber;
             this.runNum = Integer.toString(nextRunNumber);
             this.modelInitiator = modelMain.getClass().getSimpleName();
 
             ModelInitialiser.nextRunNumber++;
-            setMDC_Keys();					// Set the MDC keys from the attributes
-            setUpLogbackLogging(runID);		// Replace encoders for our per-run appenders
+            setMDC_Keys();                    // Set the MDC keys from the attributes
+            setUpLogbackLogging(runID);        // Replace encoders for our per-run appenders
 
             logger.info("******** Per-Run Model Setup ***********");
 
@@ -608,7 +613,7 @@ public abstract class ModelInitialiser {
             logger.info("Run ID {} calculated by {} and used as outputs folder name",
                     runID, modelInitiator);
 
-            modelMain.runSpecificEnvironmentSetup();		// Any model specific setup at this stage		
+            modelMain.runSpecificEnvironmentSetup();        // Any model specific setup at this stage        
         }
 
     }
@@ -640,10 +645,8 @@ public abstract class ModelInitialiser {
         // of this class). Explicit package usage in cast to get the Logback Logger instead of the
         // imported SLF4J one
 
-        //currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
-        // 					ModelInitialiser.class.getCanonicalName().split("\\.")[0]);
         currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
-                "uk.ac.soton.simulation.jsit");
+                                                    "uk.ac.soton.simulation.jsit");
         context = currLogger.getLoggerContext();
 
         modelAppender = (OutputStreamAppender<ILoggingEvent>) (currLogger.getAppender("CONSOLE"));
@@ -651,7 +654,7 @@ public abstract class ModelInitialiser {
         // If the first experiment run, replace the default encoder for the single console appender.
         // Otherwise, just update the LogLayout's reference to the main model
 
-        if (isFirstRun) {  		    	
+        if (isFirstRun) {                  
             modelAppender.stop();
             modelAppender.setEncoder(createEncoder(context, LogFormatType.CONSOLE));
             modelAppender.start();
@@ -662,13 +665,14 @@ public abstract class ModelInitialiser {
             customLayout.timeAccessor = modelMain;
         }
 
-        // Trigger diagnostic log appender addition and then replace the encoder
+        // Trigger diagnostic log appender addition and then replace the encoder. The appender
+        // in question has an ID equal to the per-run output folder path
 
         currLogger.error("Dummy error msg to set up diagnostic logging (PLEASE IGNORE)");
 
         modelAppender = (OutputStreamAppender<ILoggingEvent>)
                 ((SiftingAppenderBase<ILoggingEvent>) currLogger.getAppender("MSGS_RUN_SIFTER"))
-                .getAppenderTracker().getOrCreate(runID, System.currentTimeMillis());
+                .getAppenderTracker().getOrCreate(getOutputFilesBasePath(), System.currentTimeMillis());
         modelAppender.stop();
         modelAppender.setEncoder(createEncoder(context, LogFormatType.DIAGNOSTICS));
         modelAppender.start();
@@ -683,18 +687,24 @@ public abstract class ModelInitialiser {
         currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EVENT_LOGGER_NAME);
         context = currLogger.getLoggerContext();
 
-        // Trigger events log appender addition and replace the encoder
+        // Trigger events log appender addition and replace the encoder. The appender
+        // in question has an ID equal to the per-run output folder path
 
-        currLogger.error("Dummy error msg to set up event logging (PLEASE IGNORE)");     	
+        currLogger.error("Dummy error msg to set up event logging (PLEASE IGNORE)");         
 
         modelAppender = (OutputStreamAppender<ILoggingEvent>)
                 ((SiftingAppenderBase<ILoggingEvent>) currLogger.getAppender("EVENTS_RUN_SIFTER"))
-                .getAppenderTracker().getOrCreate(runID, System.currentTimeMillis());
+                .getAppenderTracker().getOrCreate(getOutputFilesBasePath(), System.currentTimeMillis());
         modelAppender.stop();
         modelAppender.setEncoder(createEncoder(context, LogFormatType.EVENTS));
         modelAppender.start();
 
         if (logger.isTraceEnabled()) {
+            logger.trace("Logging set up for MDC keys (run num, run ID, outputs path, initiator):\n"
+                         + MDC.get(ModelInitialiser.RUN_NUM_KEY) + ", "
+                         + MDC.get(ModelInitialiser.RUN_ID_KEY) + ", "
+                         + MDC.get(ModelInitialiser.RUN_OUTPUTS_PATH_KEY) + ", "
+                         + MDC.get(ModelInitialiser.INIT_MAIN_MODEL_KEY));
             traceLoggerInfo(currLogger);
         }
 
@@ -738,7 +748,7 @@ public abstract class ModelInitialiser {
                 }
                 for (String s : subAppKeys) {
                     logger.trace("\t\t" + s + " (sub-appender key)");
-                    subA = tracker.getOrCreate(s, 0);		// Timestamp 0 seems to work!
+                    subA = tracker.getOrCreate(s, 0);        // Timestamp 0 seems to work!
                     logger.trace("\t\t\t" + subA.getName()
                             + " (sub-appender type " + subA.getClass().getName() + ")");
                     if (subA instanceof OutputStreamAppender) {
@@ -794,12 +804,12 @@ public abstract class ModelInitialiser {
      */
     private void loadStochSettings() {
 
-        boolean stochOverrides = true;		// Assume overrides exist
+        boolean stochOverrides = true;        // Assume overrides exist
         String fullStochControlPath = modelMain.getInputsBasePath() + File.separator + STOCH_CONTROL_FILE;
         File stochControlFile = new File(fullStochControlPath);
         if (stochControlFile.exists()) {
             stochSettings = new Properties();
-            try {			
+            try {            
                 stochSettings.load(new FileReader(stochControlFile));
 
             }
@@ -808,19 +818,19 @@ public abstract class ModelInitialiser {
                         "Error reading stochasticity control overrides file "
                                 + fullStochControlPath);
             }
-            if (stochSettings.size() == 0) {		// Treat empty file as all normal settings
+            if (stochSettings.size() == 0) {        // Treat empty file as all normal settings
                 logger.warn("Empty stochasticity control file; treating as not present");
                 stochOverrides = false;
             }
             else if (stochSettings.size() == 1 && stochSettings.containsKey("ALL")) {
                 Sampler.SampleMode allMode = Sampler.SampleMode.valueOf(stochSettings.getProperty("ALL"));
                 if (allMode == Sampler.SampleMode.NORMAL) {
-                    stochOverrides = false;			// Overrides file just has ALL = NORMAL
+                    stochOverrides = false;            // Overrides file just has ALL = NORMAL
                 }
             }
         }
         else {
-            stochOverrides = false;    		
+            stochOverrides = false;            
         }
 
         if (stochOverrides) {
@@ -832,5 +842,5 @@ public abstract class ModelInitialiser {
         }
 
     }
-  	
+      
 }

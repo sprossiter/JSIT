@@ -1,4 +1,8 @@
+.classpath
+.project
+*.swp
 *.class
 workingChanges.txt
 buildOutputs/
 buildTemp/
+/bin/

@@ -48,7 +48,7 @@ import com.anylogic.engine.Utilities;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class RandomWithSeedAccess extends java.util.Random
                                   implements java.io.Serializable {
 
@@ -79,9 +79,9 @@ public class RandomWithSeedAccess extends java.util.Random
      */
     public RandomWithSeedAccess() {
 
-        this(System.currentTimeMillis());		// Chain to with-seed constructor
+        this(System.currentTimeMillis());        // Chain to with-seed constructor
         //traceln("Thread " + Thread.currentThread().getId()
-        //		+ " called RandomWithSeedAccess no-parm constructor");
+        //        + " called RandomWithSeedAccess no-parm constructor");
 
     }
 
@@ -92,9 +92,9 @@ public class RandomWithSeedAccess extends java.util.Random
      */
     public RandomWithSeedAccess(long seed) {
 
-        this(null, seed);						// Chain to engine plus seed constructor
+        this(null, seed);                        // Chain to engine plus seed constructor
         //traceln("Thread " + Thread.currentThread().getId()
-        //		+ " called RandomWithSeedAccess one-parm constructor with seed " + seed);
+        //        + " called RandomWithSeedAccess one-parm constructor with seed " + seed);
 
     }
 
@@ -104,7 +104,7 @@ public class RandomWithSeedAccess extends java.util.Random
      */ 
     public RandomWithSeedAccess(Engine _e, long seed) {
 
-        super(seed);	// Has to be first so reset the seed later if we need to change it
+        super(seed);    // Has to be first so reset the seed later if we need to change it
         if (_e != null) {
             Utilities.traceln("Thread " + Thread.currentThread().getId()
                     + " called RandomWithSeedAccess two-parm constructor with seed "
@@ -118,13 +118,13 @@ public class RandomWithSeedAccess extends java.util.Random
                 RandomWithSeedAccess.baseSeed = seed;
             }
             else {
-                if (lastInstanceSeed == Long.MAX_VALUE) {		// Wrap if we've got to max long val
+                if (lastInstanceSeed == Long.MAX_VALUE) {        // Wrap if we've got to max long val
                     seed = 1;
                 }
                 else {
-                    seed = ++lastInstanceSeed;	// Just increment for each new instantiation
+                    seed = ++lastInstanceSeed;    // Just increment for each new instantiation
                 }
-                setSeed(seed);					// Reset the seed
+                setSeed(seed);                    // Reset the seed
             }
             this.seedCopy = seed;
             RandomWithSeedAccess.lastInstanceSeed = seed;

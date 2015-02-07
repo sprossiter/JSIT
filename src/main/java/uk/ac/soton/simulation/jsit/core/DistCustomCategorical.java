@@ -29,7 +29,7 @@ import com.thoughtworks.xstream.XStream;
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */	
+ */    
 public class DistCustomCategorical<C extends Enum<C>>
         extends DistributionCategorical<C> implements Serializable {
 
@@ -50,7 +50,7 @@ public class DistCustomCategorical<C extends Enum<C>>
     }
 
 
-    // ************************* Instance Fields **************************************	
+    // ************************* Instance Fields **************************************    
 
     // PMF (Probability Mass Function) as an array of (double) probabilities
     private final double[] pmf;
@@ -61,7 +61,7 @@ public class DistCustomCategorical<C extends Enum<C>>
     public DistCustomCategorical(Class<C> categoryEnumType, double[] pmf) {
 
         super(categoryEnumType);
-        checkPMF(pmf);			// Superclass-provided check method   	
+        checkPMF(pmf);            // Superclass-provided check method       
         this.pmf = pmf;
 
     }
@@ -72,7 +72,7 @@ public class DistCustomCategorical<C extends Enum<C>>
     public void setProbability(C categoryValue, double prob) {
 
         pmf[categoryValue.ordinal()] = prob;
-        checkPMF(pmf);		// Recheck that probs sum to (near to) 1
+        checkPMF(pmf);        // Recheck that probs sum to (near to) 1
 
     }
 
@@ -102,7 +102,7 @@ public class DistCustomCategorical<C extends Enum<C>>
         Integer sample = null;
         Sampler.SampleMode mode = getAccessor().getSampleMode();
 
-        double randomProb;    	
+        double randomProb;        
         if (mode == Sampler.SampleMode.COLLAPSE_MID) {
             randomProb = 0.5d;
         }
@@ -125,7 +125,7 @@ public class DistCustomCategorical<C extends Enum<C>>
             }
         }
 
-        if (sample == null) {			// 'Overflow'; assume be due to rounding
+        if (sample == null) {            // 'Overflow'; assume be due to rounding
             logger.warn("Overflowed lookup table matching random sample " + randomProb
                     + ": assuming rounding issues. Defaulting to last alternative");
             sample = pmf.length;
