@@ -993,7 +993,9 @@ public abstract class ModelVersioningAssistant {
     /*
      * Reset changes files so that just-committed changes now in
      * lastCommitChanges.txt and currentChanges.txt is emptied (plus
-     * delete the temporary backup version file).
+     * delete the temporary backup version file). The model version file
+     * backup may not exist. (The commit may have just been for new/
+     * altered files outside the source directories.)
      */
     private void resetWorkingFiles(File workingChanges,
                                    File tempPrevChanges,
@@ -1003,7 +1005,9 @@ public abstract class ModelVersioningAssistant {
             workingChanges.delete();
             workingChanges.createNewFile();
             tempPrevChanges.delete();
-            tempModelVersion.delete();
+            if (tempModelVersion != null) {
+                tempModelVersion.delete();
+            }
         }
         catch (IOException e) {
             throw new VersionControlException(
