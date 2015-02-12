@@ -1,0 +1,1346 @@
+<!--
+    JSIT User Guide HTML source
+    Author: Stuart Rossiter
+	
+    ****************************************************************************	
+    Copyright 2015 University of Southampton
+	
+    This file is part of JSIT.
+
+    JSIT is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    JSIT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with JSIT.  If not, see <http://www.gnu.org/licenses/>.
+    ****************************************************************************
+    
+-->
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<link rel="stylesheet" type="text/css" href="userGuide.css" />
+<title>JSIT User Guide</title>
+</head>
+
+<body>
+
+<h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
+<p class="subHeading"><b>JSIT Version: </b>0.2
+<br />
+<b>Last Updated: </b>7th February 2015</p>
+
+<h2>Contents</h2>
+
+<div class="warning"><b>This current documentation is still a little preliminary
+for the stochasticity control and domain events sections, although the code in
+the example models should provide a lot of helpful detail. It will be enhanced
+as soon as time allows (at the same time as improving the rather-bare Javadoc
+for the code).</b></div>
+
+<ul>
+<li><a href="#intro">Introduction</a></li>
+<ul>
+<li><a href="#features">Features Overview</a></li>
+</ul>
+<li><a href="#usageOverview">Usage Overview</a></li>
+<ul>
+<li><a href="#exampleModels">Example Models</a></li>
+</ul>
+<li><a href="#detailedUsage">Detailed User Guide</a></li>
+<ul>
+<li><a href="#setup">JSIT Setup &amp; Initialisation</a></li>
+<ul>
+<li><a href="#setupCommon">Common Details</a></li>
+<li><a href="#setupAnyLogic">AnyLogic (via helper library)</a></li>
+<li><a href="#setupRaw">Raw Implementation</a></li>
+</ul>
+<li><a href="#logging">Logging</a></li>
+<ul>
+<li><a href="#loggingNormal">Standard Process</a></li>
+<li><a href="#loggingAnyLogic">AnyLogic Process</a></li>
+</ul>
+<li><a href="#repro">Run Reproducibility</a></li>
+<ul>
+<li><a href="#reproAnyLogic">AnyLogic (via helper library)</a></li>
+<li><a href="#reproRaw">Raw Implementation</a></li>
+</ul>
+<li><a href="#vc">Model Version Control</a></li>
+<ul>
+<li><a href="#vcNoVCS">No Version Control System (model 'checkpointing')</li>
+<li><a href="#vcSVN">Subversion</li>
+</ul>
+<li><a href="#stochControl">Test-Oriented Stochasticity Control</a></li>
+<ul>
+<li><a href="#stochControlNormal">Standard Process</a></li>
+<li><a href="#stochControlAnyLogic">AnyLogic Process</a></li>
+</ul>
+<li><a href="#domainEvents">Domain Events &amp; Event-Driven Separation</a></li>
+</ul>
+</ul></p>
+
+<hr /><hr />
+
+<!-- *************************************************************************** -->
+<!-- *************************************************************************** -->
+
+<h2 id="intro">Introduction</h2>
+
+<p>The Java Simulation Infrastructure Toolkit (JSIT) is a set of Java libraries
+which consistently add a set of useful 'infrastructural' features for
+simulation:
+
+<ul>
+
+<li>advanced <span class="term">logging</span> with switchable levels per model
+components and separation of outputs per run;</li>
+
+<li>support for <span class="term">reproducible simulation runs</span> and thus
+results provenance;</li>
+
+<li>the ability to <span class="term">control the stochasticity in the
+model</span> external to the model code (plus providing a standardised interface
+to stochastic functions across simulation frameworks), which is particularly
+useful for model <em>testing</em>;</li>
+
+<li>a <span class="term">publish-subscribe events architecture</span> which
+allows for model components to be more easily de-coupled from each other
+(especially useful when separating model from model visualisation).</li>
+
+</ul>
+
+JSIT also suggests some best-practice ways of splitting up your source code
+(separating simulation from experiments), though this is not required.</p>
+
+<div class="sideNote">Where this user guide uses the term 'framework', it is
+always referring to a simulation framework that JSIT is being used with (such as
+AnyLogic), and not JSIT itself (though it can also be regarded as a
+framework).</div>
+
+<p>JSIT can be used in any Java-based simulation (or any simulation which can
+interoperate with Java), though the focus is on something that will integrate
+nicely with Java-based simulation frameworks such as <a
+href="http://cs.gmu.edu/~eclab/projects/mason/">MASON</a>, <a
+href="http://repast.sourceforge.net/">Repast Simphony</a> or <a
+href="http://www.anylogic.com/">AnyLogic</a>. (JSIT was thought up precisely
+<i>because</i> all the Java-based simulation frameworks the author is aware of
+lack these important features, at least in the relatively 'full' form provided
+by JSIT.)</p>
+
+<div class="sideNote">Helper libraries for at least MASON and Repast Simphony
+are planned.</div>
+
+<p>Using the core JSIT library in a given simulation framework requires a fair
+degree of thought and custom code, so JSIT also provides <span
+class="term">helper libraries for specific frameworks</span> which provide
+robust, well-designed and reusable ways to more simply integrate with any model
+written using that framework and avoid having to integrate in a 'raw' way. (They
+also sometimes add useful helper features that leverage tools available in that
+framework.) <em>Currently, a helper library is only available for AnyLogic</em>,
+though there is an <a href="#exampleModels">example model</a> which shows one
+way to do a raw integration for a MASON-based model.</p>
+
+<p>The following academic journal paper gives much more detail on the rationale
+for JSIT and why modellers might want to use the features above (as well as the
+wider picture of best-practice software engineering principles for simulation,
+and why the helper library focus was on AnyLogic):
+
+<blockquote>
+Rossiter, S. (Forthcoming). Simulation Design: Trans-Paradigm Best-Practice from
+Software Engineering. <em>Journal of Artificial Societies &amp; Social
+Simulations (JASSS)</em>.
+</blockquote>
+
+<em>Please cite this paper when using JSIT for any models that are included in
+your own academic papers.</em></p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="features">Features Overview</h3>
+
+<p>Below is a basic list of current features (and some side notes on intended
+future functionality). The paper mentioned above provides some extra detail.</p>
+
+<p><b>Logging</b></p>
+
+This is supported by the powerful and widely-used <a
+href="http://logback.qos.ch/">Logback</a> open-source logging libraries.
+
+<ul>
+
+<li>Log diagnostic messages at different detail levels and control which detail
+levels are 'turned on' per-run in a configuration file.</li>
+
+<li>Configure logging granularity: different log levels can be enabled for
+different components of your model.</li>
+
+<li>Separate logs per simulation run in timestamped folders, including the
+handling of multi-run experiments, restarted runs from a control GUI, and
+parallelised runs in the same JVM (which AnyLogic supports).</li>
+
+<li>Automatic logging (in the timestamped outputs folder) of any published
+domain events in a separate events log file.</li>
+
+</ul>
+
+<p><b>Run Reproducibility</b></p>
+
+<ul>
+
+<div class="sideNote">Ideally these run settings would also allow you to
+<em>automatically</em> recreate a model run, but that is much more sophisticated
+functionality that may be explored in future.</div>
+
+<li>Automatic creation of a run settings file (in XML) which contains
+information that allows you to recreate runs. This includes all model parameter
+settings, provenance for the model code (in terms of its version-control system
+(VCS) location) and environmental information (e.g., version of Java).</li>
+
+<li>Ability for the user to define a model name and version which is reported in
+outputs.</li>
+
+<li>Run-time checks as to whether the model code being run has been altered from
+anything checked-out or exported from a VCS (which would mean
+that you might not be able to exactly reproduce this run since the code run is
+not stored and referenceable via the VCS).</li>
+
+<div class="sideNote">Currently only <a
+href="http://subversion.apache.org/">Subversion</a> is supported as a VCS,
+though there is also a way to 'checkpoint' a model's code without using a
+VCS.</div>
+
+<li>A JSIT-tooled VCS commit process which maintains the meta-data needed to
+support the functionality above.</li>
+
+</ul>
+
+<p><b>Stochasticity Control</b></p>
+
+<ul>
+
+<div class="sideNote">Currently only a (useful) subset of a 'standard' set of
+distributions is supported, purely due to development time limitations.</div>
+
+<li>Represent each probability distribution you use in the model as an explicit
+named object, with these details logged at run-time. (This gives traceability
+and automated 'documentation' of all stochasticity in the model.)</li>
+
+<li>Use a standard API and definition of distributions across simulation
+frameworks. (<em>The framework is still being used for the underlying
+implementation of the distributions that it supports</em>; any it does not
+support cannot be used.)</li>
+
+<li>Share these distributions as needed: typically a distribution is shared by
+all instances of some model component class <em>which are for the same model
+run</em> (which is made more complicated if there are parallel runs of the model
+in the same JVM, since you cannot just store these distributions as
+<code>static</code> class fields since some instances of the class might be for
+one run, and some for another).</li>
+
+<div class="sideNote">It is intended that other generic 'stochasticity control'
+operations will be supported, such as increasing / decreasing variance or
+collapsing continuous distributions to a discrete set of outcomes.</div>
+
+<li>Via per-run configuration files, be able to collapse selected distributions
+to their mean value to aid model testing and understanding (i.e., 'turn off
+stochasticity' in particular areas for that run).</li>
+
+</ul>
+
+<p><b>Publish-Subscribe Events Architecture</b></p>
+
+<ul>
+
+<div class="sideNote">This is currently supported in a simple way where
+event-specific data is <em>not</em> included with the event (other than in an
+event message string). It is the responsibility of the receiver to query the
+event source for any information it needs, and thus the source needs to be
+designed to make the appropriate information available. This does have some
+intrinsic benefits (as well as drawbacks).</div>
+
+<li>Define model events that have meaning in the domain being modelled (I call
+these <span class="term">domain events</span>) and have these automatically
+logged to provide a model narrative.</li>
+
+<div class="sideNote"><em>Asynchronous</em> event communication would be another
+possibility (where receivers 'check their mail' as they need to; a pull
+architecture, rather than a push one), but is not currently implemented.</div>
+
+</li>Have model components subscribe to events published by a model component
+(either one or all instances of it) and receive notification synchronously when
+the event occurs. This allows for models to be designed in a nicely decoupled
+way, and is particularly useful when visualisation components need to update to
+reflect these events. (As a general design principle, model components should
+<em>not</em> be explicitly 'aware' of what is visualising them.)</li>
+
+</ul>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr /><hr />
+
+<!-- *************************************************************************** -->
+<!-- *************************************************************************** -->
+
+<h2 id="usageOverview">Usage Overview</h2>
+
+<p>The UML class diagram in <b>Figure 1</b> summarises the core JSIT classes and
+how they 'fit' into a user-written model:</p>
+
+<img src="diagrams/jsitUsageClassSimple.png"></img>
+
+<p><b>Figure 1</b>: <em>Overview of JSIT class structure within a user
+model.</em></p>
+
+<div class="sideNote">Models may have multiple 'runnable top-level classes' to
+cater for different visualisation (GUI) alternatives, especially for frameworks
+such as MASON which make a very clean separation between model and
+visualisation. Yet there is normally one 'core' root class which represents a
+visualisation-less ('headless') or minimal-visualisation implementation of the
+model (and this will be the model root in the sense here); the other top-level
+classes will aggregate an instance of this core class. However, we will see
+that, for AnyLogic models, it is best to make all these top-level classes model
+roots, coded in such a way that only the first-initialised one actually sets up
+the infrastructure.</div>
+
+<p>The user's model consists of a 'root' class and some set of model components
+(here indicated by <code>&lt;ModelRoot&gt;</code> and
+<code>&lt;ModelComponent&gt;</code>). The root class needs to implement the JSIT
+<code>MainModel</code> interface (possibly via a superclass or other helper
+class) and set up some concrete subclass of <code>ModelInitialiser</code> which
+initialises the JSIT framework (in particular the logging, which we want to be
+set up at the earliest possible opportunity so that messages can be logged
+during 'early' parts of model initialisation).</p>
+
+<p>The concrete <code>ModelInitialiser</code> will set up a concrete
+<code>Sampler</code> subclass which links the set of stochasticity classes to
+some actual framework implementation. JSIT is not intended to provide some
+'canonical' set of stochastic <em>implementations</em>; the JSIT classes are
+wrappers to some underlying implementation which ensure a consistent API and
+(crucially) allow for the stochasticity to be controlled external to the model's
+code.</p>
+
+<p><em>Helper libraries do virtually all the work above for you for a given
+simulation framework</em>. With all this set up, the model's user code can then
+use the JSIT features as it needs to via
+
+<ul>
+
+<li><a href="http://www.slf4j.org/">SLF4J</a> <code>Logger</code> instances for
+logging (using <a href="http://logback.qos.ch/">Logback</a> as the underlying
+implementation) and a Logback configuration file to control the logging per
+run;</li>
+
+<li>code in the concrete <code>ModelInitialiser</code> to automatically store
+settings for each run (including all model parameters and information on the
+environment, where this includes provenance for the model code via its location
+in a version control system);</li>
+
+<div class="sideNote">As in the diagram, stochastic items are normally accessed
+via a <code>StochasticAccessorMDC</code>, which is explained later.</div>
+
+<li>JSIT <code>StochasticItem</code> subclasses for probability distributions
+(and related components such as distribution-lookups via Java enum 'keys'), and
+per-run configuration files to control this stochasticity;</li>
+
+<li>the JSIT <code>EventManager</code> to publish and subscribe to events (using
+<code>EventSource</code> and <code>EventReceiver</code> interfaces which
+are not shown in the diagram).
+
+</ul></p>
+
+<p>JSIT also provides some helper tools for committing model code to
+version-control systems which sets up the meta-data needed to have an audit
+trail of model versions.</p>
+
+<p>The JSIT implementation uses a lot of <a
+href="http://docs.oracle.com/javase/tutorial/java/generics/">Java Generics</a>
+functionality (which means that Java 5+ is required) so that there is useful
+compile-time type-checking for things like probablity distributions.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="exampleModels">Example Models</h3>
+
+<p>Two example models are available for JSIT:
+
+<ul>
+
+<li>A `real' (non-demo) complex AnyLogic model, which also demonstrates some
+other design features recommended in the JSIT journal paper. It is available via
+the <a
+href="https://sourceforge.net/p/amdhealthsocialcaresim/"><code>AMD_HealthSocialCareSim</code></a>
+SourceForge project.</li>
+
+<li>An extension of the MASON Heat Bugs demo model which shows one way to do a
+raw implementation of JSIT integration (in this case using the MASON toolkit).
+This also helps understand some of the design decisions (as well as aspects that
+the forthcoming MASON helper library needs to consider). It is available via the
+<a
+href="https://github.com/sprossiter/JSIT_DemoMASON"><code>sprossiter/JSIT_DemoMASON</code></a>
+GitHub project.</li>
+
+</ul></p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr /><hr />
+
+<!-- *************************************************************************** -->
+<!-- *************************************************************************** -->
+
+<h2 id="detailedUsage">Detailed User Guide</h2>
+
+<p>JSIT users will either be using a framework-specific helper library, or
+coding their own 'raw' integration with JSIT (effectively their own set of
+helper classes, which can be as 'minimal' or model-specific as desired). For
+each area of usage, I break down the information as follows:
+
+<ul>
+
+<li>details common to all usage scenarios;</li>
+
+<li>details for each helper library (and thus helper-library-supported
+framework);</li>
+
+<li>details for a raw implementation (if any).</li>
+
+</ul></p>
+
+<p><b>NB</b>: Whenever I refer to filesystem paths, I use Linux-style forward
+slashes as separators (cf. backslashes on Windows). Where these paths are
+actually included in configuration files read by Java, you can actually leave
+them as forward slashes on Windows, because Java will still interpret them
+properly.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="setup">JSIT Setup &amp; Initialisation</h3>
+
+<h4 id="setupCommon">Common Details</h4>
+
+<div class="sideNote">Practically, not separating code for the simulation from
+its experiments means that, for runs to be guaranteed reproducible, you would
+need to commit all this code (i.e., model and experiments) to the VCS before
+doing any run.</div>
+
+<p>Your model's source code, and any libraries used, should exist under a single
+'simulation' directory so that JSIT knows what comprises the code of the model.
+This should ideally be separate from any code for model experiments because,
+otherwise, JSIT cannot distinguish between the model itself having changed or
+just some details of an experiment using it. (Since JSIT records details of all
+the parameters set for each experiment in per-run outputs, experiments can be
+reproduced from this information <em>and</em> the correct version of the
+simulation code.)</p>
+
+<p>There should be separate directories for JSIT-specific inputs (which apply to
+<em>all</em> experiments run) and outputs (where individual runs will have
+sub-directories automatically created by JSIT with timestamped names). Since
+these relate only to experiments, it makes sense to group them with the source
+code for your experiments.</p>
+
+<div class="sideNote">Your experiments may take the form of batch scripts or
+similar (rather than, or in combination with, source code) and so you might not
+need the <code>Source</code> and <code>Libs</code> folders shown for
+experiments.
+
+<br /><br />
+
+If you are using an <a
+href="https://en.wikipedia.org/wiki/Integrated_development_environment">IDE</a>
+like <a href="http://www.eclipse.org/">Eclipse</a> to develop and run your
+model, then you can have <code>ModelX</code> as a project or (perhaps better to
+ensure that the separation is a clean one) have your <code>Sim</code> and
+<code>Experiments</code> directories as separate projects, with the latter
+dependent on the former.</div>
+
+<p>Let's assume in what follows that your model is called <code>ModelX</code>
+and that you have directory structure as below (which is a sensible 'canonical'
+structure given the above):
+
+<pre>
+ModelX
+    Sim
+        Source
+        Libs
+    Experiments
+        Source
+        Libs
+        Inputs
+        Outputs
+</pre>
+
+We'll talk about the 'simulation folder' and the 'experiments folder' in what
+follows. Let's also assume that your model code is all in a single Java package
+<code>uk.ac.uniofsim.modelx</code>.</p>
+
+<h5>Install SVN JavaHL (if needed)</h5>
+
+<div class="sideNote">JSIT uses this, rather than the pure-Java <a
+href="http://svnkit.com/">SVNKit</a>, for licensing reasons: JSIT could not be
+licensed LGPL if using SVNKit. JavaHL is also typically faster and (being an
+official Subversion component) is normally more up-to-date with SVN
+changes.</div>
+
+<p>If you are storing your model code in an SVN VCS, you will need an
+implementation of the <a href="http://subversion.apache.org/">Apache
+Subversion</a> Java binding library (JavaHL) installed. This is a mixture of
+native (OS-specific) and JAR libraries.</p>
+
+<div class="sideNote">Ubuntu releases before Ubuntu 14.04 (Trusty) include SVN
+1.6 rather than SVN 1.8, and thus JavaHL for SVN 1.6.</div>
+
+<p>On Linux, there should be a package for this. On Ubuntu it is <a
+href="http://packages.ubuntu.com/search?keywords=libsvn-java&searchon=names&suite=all&section=all">libsvn-java</a>.
+This installs the native libraries and puts the <code>svn-javahl.jar</code> JAR
+file in <code>/usr/share/java</code>. You will need to reference this as a
+run-time dependency for your model (i.e., a JAR on the classpath when you run
+it).</p>
+
+<div class="sideNote">It is unfortunate that the 'matching' JAR file for the
+JavaHL native libraries needs to be taken from the JSIT distribution, especially
+as this means that JSIT needs to keep up with new SVN releases; JSIT will only
+include JARs for the latest release in a given minor SVN version (e.g., 1.6 or
+1.8). The <a href="https://subversion.apache.org/">Apache Subversion project</a>
+does not provide binary downloads of this JAR file.
+
+<br /><br />
+
+I don't know why SlikSVN and CollabNet do not include the JAR file in their
+distributions. The <a
+href="http://www.wandisco.com/subversion/download">WANDisco Subversion
+client</a> (<em>not</em> SmartSVN) <em>does</em> include the JAR file but is
+only available in a 32-bit version, and so will not work on 64-bit Windows
+installations (which tend to be the majority nowadays). Feel free to try that if
+you have 32-bit Windows. For more background, there is a <a
+href="http://stackoverflow.com/questions/26782416/">StackOverflow question</a>
+and a <a
+href="http://www.wandisco.com/svnforum/threads/69252-Subversion-command-line-client-64bit-version-for-Windows">WANDisco
+forum post</a> about this.</div>
+
+<p>On Windows, install either the <a
+href="https://sliksvn.com/download/">SlikSVN</a> or <a
+href="http://www.collab.net/downloads/subversion">CollabNet</a> SVN client to
+install the native JavaHL libraries. This can exist alongside <a
+href="http://tortoisesvn.net/">TortoiseSVN</a>, which most Windows SVN users
+tend to use for its GUI (but which does not include JavaHL). Then include the
+relevant JavaHL JAR file from the JSIT distribution
+(<code>libsvn-java-&lt;ver&gt;.jar</code>) for your SVN client version as a
+run-time dependency for your model (i.e., a JAR on the classpath when you run
+it).</p>
+
+<h5>Set Up Other Library Dependencies</h5>
+
+<p>In your simulation libraries folder, add JARs for the JSIT core library and
+all its run-time dependencies (and their dependencies):
+
+<ul>
+
+<li><a href="http://logback.qos.ch/">Logback</a> (core and classic
+libraries)</li>
+
+<li><a href="http://www.slf4j.org/">SLF4J</a></li>
+
+<li><a href="http://xstream.codehaus.org/">XStream</a>
+
+<ul>
+<li><a href="http://www.xmlpull.org/">XMLPull</a> (get from the <a
+href="http://xstream.codehaus.org/download.html">XStream downloads page</a>);</li>
+
+<li><a href="http://www.extreme.indiana.edu/xgws/xsoap/xpp/mxp1/">Xpp3</a> (get
+from the <a href="http://xstream.codehaus.org/download.html">XStream downloads
+page</a>);</li>
+
+</ul>
+</li>
+
+<li><a href="http://commons.apache.org/proper/commons-codec/">Apache Commons
+Codec</a></li>
+
+<li><a href="http://commons.apache.org/proper/commons-io/">Apache Commons IO</a></li>
+
+<li><a href="http://commons.apache.org/proper/commons-configuration/">Apache
+Commons Configuration</a>
+
+<ul>
+<li><a href="http://commons.apache.org/proper/commons-lang/">Apache Commons Lang
+2.x</a> (make sure you get the legacy 2.x version)</li>
+
+<li><a href="http://commons.apache.org/proper/commons-logging/">Apache Commons
+Logging</a></li>
+
+</ul>
+</li>
+
+</ul>
+
+These are all included in the JSIT distribution.</p>
+
+<div class="sideNote">You could separate out compile-time from run-time
+dependencies, but many mainstream IDEs (such as <a
+href="http://www.eclipse.org/">Eclipse</a>) do not distinguish between them. (In
+Eclipse, all compile- and run-time dependencies go in the build path.) If you
+have separated the simulation and experiments into separate IDE projects, then
+specifiying the experiments project as dependent on the simulation one typically
+includes all its dependencies implicitly.</div>
+
+<p>Add all of these as compile and run-time dependencies for your simulation and its
+experiments (in the IDE you develop it in or however you compile and launch your
+model).</p>
+
+<h5>Set Up Configuration Files</h5>
+
+<div class="sideNote">If you are using an IDE like Eclipse, whatever folders you
+declare as source folders are typically compiled to a <code>bin</code> folder,
+<em>and any non-Java files in your source folders are also copied there</em>.
+Thus, putting <code>logback.xml</code> in your <code>Experiments/Source</code>
+folder will mean it is on the classpath (in the generated <code>bin</code>
+folder) at run-time.
+
+<br /><br />
+
+You can also use Java code as below to print out the classpath at
+run-time:
+
+<pre>
+System.out.println("Classpath: " + System.getProperty("java.class.path"));
+</pre>
+
+</div>
+
+<p>In a directory that will be on the Java classpath when running your
+experiments, include a <span class="term">logging configuration file</span>
+<code>logback.xml</code>, customised from the template provided in
+<code>src/main/config/logback.xml</code> (see the comments therein). Unless you
+want to adjust the default logging behaviour, the only things you need to change
+in the template is your model's Java package name as below:
+
+<div class="sideNote">If your model code is contained in multiple packages, use
+multiple entries of the four lines with the appropriate package names in
+each.</div>
+
+<pre>
+&lt;logger name="uk.ac.uniofsim.modelx" level="INFO" additivity="false"&gt;
+    &lt;appender-ref ref="MSGS_RUN_SIFTER" /&gt;
+    &lt;appender-ref ref="CONSOLE" /&gt;
+&lt;/logger&gt;
+</pre>
+</p>
+
+<p>In your simulation directory, include a customised JSIT <span
+class="term">model version file</span> <code>modelVersion.properties</code>. If
+your model code is in a Subversion (SVN) VCS, use
+<code>src/main/config/SVN/modelVersion.properties</code> as a template, or
+<code>src/main/config/SVN_Legacy/modelVersion.properties</code> if you are using
+a pre-1.7 SVN client. Otherwise use
+<code>src/main/config/NoVCS/modelVersion.properties</code> as a template. Fill
+in the <code>ModelName</code> and <code>ModelVersionNum</code> fields (example
+below for SVN 1.7+):
+
+<pre>
+#   Model Version Control Properties File for SVN 1.7+ Client
+#    USERS SHOULD ONLY EDIT ModelName and ModelVersionNum
+#       Extra entries will be added on commit
+ModelName = ModelX
+ModelVersionNum = 0.1
+ModelVCS = SVN
+VersionFileRepoURL = $HeadURL$
+LastCommitRev = $Revision$
+</pre></p>
+
+<p>This will be automatically updated if you commit model changes to a version
+control system (or 'checkpoint' the model code if using the NoVCS file) using
+JSIT tools.</p>
+
+<div class="sideNote">You need to know what the working directory will be when
+running your simulation, since all paths you give will be relative to this. When
+developed in an IDE, the root directory of the project is normally the working
+directory.
+
+<br /><br />
+
+You can also use Java code as below to print out the working directory at
+run-time:
+
+<pre>
+import java.io.File;
+
+System.out.println("Working directory: " + new File(".").getAbsolutePath());
+</pre>
+</div>
+
+<p>In your experiments' inputs directory, include a <span class="term">model
+source paths file</span> <code>modelSourcePaths.properties</code> which tells
+JSIT the paths from where your experiments are run to where certain aspects of
+the model code resides. Use the template in
+<code>src/main/config/modelSourcePaths.properties</code>. Given the directory
+structure earlier, this would have non-comment contents as below:
+
+<pre>
+ModelVersionFileDir = Sim
+SimSourcePath = Sim
+</pre>
+
+The second entry here (which can include multiple directories) is only needed if
+you have the source code of the model available at run-time, as is the case in
+the example given
+. It is used so that JSIT can check whether the
+simulation source code specified has been changed from the VCS version it came
+from; you can also omit this second entry if you do have the source code
+available, but don't want this check to be done.</p>
+
+<div class="sideNote">Typically, you'd put the script in the root directory if
+you are managing all the code as a single IDE project. (You don't have to in
+this case, but this would mean having to commit non-simulation-code changes
+separately.) If you have separate IDE projects for the simulation and its
+experiments, it makes sense to include the script in the simulation folder and
+use it only for committing simulation changes.</div>
+
+<p>In either your 'root' model directory or your simulation directory, include a
+customised <span class="term">commit/checkpoint batch script</span>. If it is in
+your root directory, it will be used to commit changes to all your model code
+(or checkpoint the code if you are not using a VCS).  If it is in your
+simulation directory, it will be used to commit simulation-only changes. In
+either case, any changes to simulation code (cf. other model code) will result
+in the model properties file being automatically updated so as to record
+version-control details of the simulation code.<p>
+
+<p>For Windows, use <code>src/main/scripts/commitModel.bat</code> as a template;
+for Linux use <code>src/main/scripts/commitModel.sh</code> (set as executable).
+The script should be altered to include the path to your simulation code
+directory (relative to where the script is).  For Windows with the directory
+structure above, and the script in the model root folder, the script would have
+non-comment contents as below:
+
+<pre>
+java -cp "Sim\Libs\*" ^
+uk.ac.soton.simulation.jsit.core.ModelVersioningAssistant COMMIT Sim
+echo -------------------------------------------------------
+echo Commit complete (check for errors above). Press any key
+pause
+</pre>
+</p>
+
+<h5>Summary</h5>
+
+<p>For completeness, your file structure should therefore be as below on Windows
+assuming everything stated earlier (JAR file versions may differ):
+
+<pre>
+ModelX
+    commitModel.bat
+    Sim
+        modelVersion.properties
+        Source
+        Libs
+            commons-codec-1.10.jar
+            commons-configuration-1.10.jar
+            commons-io-2.4.jar
+            commons-lang-2.6.jar
+            commons-logging-1.2.jar
+            jsit-core-0.2.jar
+            logback-classic-1.1.2.jar
+            logback-core-1.1.2.jar
+            slf4j-api-1.7.4.jar
+            xmlpull-1.1.3.1.jar
+            xpp3_min-1.1.4c.jar
+            xstream-1.4.7.jar
+    Experiments
+        Source
+            logback.xml
+        Libs
+        Inputs
+            modelSourcePaths.properties
+        Outputs
+</pre>
+</p>
+
+<h4 id="setupAnyLogic">AnyLogic (via helper library)</h4>
+
+<p>There are some important specifics with respect to AnyLogic.</p>
+
+<h5>Setting the Java Package Name</h5>
+
+<p>By default, AnyLogic models generate code in a Java package which has the
+same name as your ALP file. However, you can change this in the Advanced part of
+the model's Properties; the below assumes you have changed this to 
+<code>uk.ac.uniofsim.modelx</code> as earlier.</p>
+
+<h5>Model &amp; Experiments Separation</h5>
+
+<div class="sideNote">This method does unfortunately require the modeller to
+keep the wrapper Agent in-sync with the wrapped one. (For example, if the set of 
+parameters changes that has to be reflected in the wrapper Agent.) It also means
+that the model-only file (AnyLogic model) and experiments-only one both need to
+be open in the AnyLogic client to be able to build and run experiments. I have
+suggested to AnyLogic that being able to reference a top-level Agent from
+another AnyLogic model would (therefore) be a powerful feature.
+
+<br /><br />
+
+AnyLogic uses the term 'model' to refer to an ALP file, which is slightly
+confusing for us here because one ALP file contains only experiments and no
+'model'. That is one of the reasons I have consistently used the terminology
+<em>simulation</em> and <em>experiments</em>, so there should be no confusion
+that 'simulation' is referring to the without-experiments ALP file.</div>
+
+<p>AnyLogic models are stored in <code>.alp</code> files and normally the
+experiments (AnyLogic Experiments) are included in the same file. However, it
+<em>is</em> possible to separate the two, as JSIT prefers, because you can
+include (instances of) Agents from another model file. Thus, you can have a
+simulation file (say <code>ModelX.alp</code> for our running example) with no
+Experiments, and an experiments-only one (say
+<code>ModelX_Experiments.alp</code>).</p>
+
+<p>Unfortunately, an Experiment's top-level agent must still exist in the same
+file, so you need to proceed as below:
+
+<ol>
+
+<li>Create an Agent in your experiments file which is just a wrapper for the
+required main Agent in the simulation file. That is,
+
+<ul>
+
+<li>create a new Agent in your experiments file;</li>
+
+<li>copy all the AnyLogic parameters from the model's main Agent into the
+wrapper Agent;</li>
+
+<li>add an embedded instance of the main Agent in (by dragging it from the
+simulation file in the Projects tab to the design window for your wrapper
+Agent);</li>
+
+<li>set each of its parameters to reference the respective wrapper Agent
+parameter.</li>
+
+</ul>
+
+The <a href="#exampleModels">example model</a> shows this in action: see Agents
+<code>Main_Model</code> and <code>Main_ModelFullViz</code> in
+<code>AMD_HealthSocialCare.alp</code>, and their wrapper Agents
+<code>Main_ModelWrapper</code> and <code>Main_ModelFullVizWrapper</code> in
+<code>AMD_ExperimentsDemos.alp</code>.</li>
+
+<li>Set the wrapper Agent to be the top-level agent for your Experiment.</li>
+
+</ol>
+</p>
+
+<h5>Dependencies</h5>
+
+<p>All the JAR file dependencies discussed earlier, plus the JSIT AnyLogic
+helper library <code>jsit-anylogic-0.2.jar</code>, need adding to your AnyLogic
+simulation file as dependencies (in the Dependencies section of the model's
+Properties). AnyLogic has an issue where model dependencies that are not within
+the same directory as the model file are referenced internally using
+<em>absolute</em> file paths, which means that they will break if the model
+moves to a new absolute path (e.g., from under one user's home directory to
+another's), even if the relative path to the dependency stays the same. For this
+reason, I recommend storing your dependencies in a <code>Libs</code> folder
+<em>within</em> your ALP files' directories and not having an explicit
+<code>Source</code> subdirectory.</p>
+
+<p>If you are using wrapper Agents as above in a separate experiments
+ALP file, then these dependencies will automatically be used at
+<em>run-time</em> because you are referencing that ALP file as a dependency
+(which happens automatically when you drag an instance of the main Agent into
+your wrapper Agent). However, you will also need to add the two JSIT libraries
+(only) as dependencies for the experiments ALP file because they are needed at
+<em>compile</em> time (<code>jsit-core-0.2.jar</code> and
+<code>jsit-anylogic-0.2.jar</code>).</p>
+
+<p>In addition, AnyLogic does not copy across files to its 'hidden' build area
+which are not referenced from the ALP file, so you cannot include
+<code>logback.xml</code> in the same directory as the ALP file and have it on
+the Java classpath at runtime. The simplest way to achieve it is to put
+<code>logback.xml</code> in its own <code>LoggingConfig</code> or similar
+directory (under the folder where the ALP file is) and add this as a dependency
+to the experiments ALP file (specifying it as an External Class Folder and not
+importing it to the model folder).</p>
+
+<p>Given all this, the canonical file structure would be as follows for an
+AnyLogic model (also showing the ALP files):
+
+<pre>
+ModelX
+    commitModel.bat
+    Sim
+        ModelX.alp
+        modelVersion.properties
+        Libs
+            commons-codec-1.10.jar
+            commons-configuration-1.10.jar
+            commons-io-2.4.jar
+            commons-lang-2.6.jar
+            commons-logging-1.2.jar
+            jsit-anylogic-0.2.jar
+            jsit-core-0.2.jar
+            logback-classic-1.1.2.jar
+            logback-core-1.1.2.jar
+            slf4j-api-1.7.4.jar
+            xmlpull-1.1.3.1.jar
+            xpp3_min-1.1.4c.jar
+            xstream-1.4.7.jar
+    Experiments
+        ModelX_Experiments.alp
+        LoggingConfig
+            logback.xml
+        Libs
+            jsit-anylogic-0.2.jar
+            jsit-core-0.2.jar
+        Inputs
+            modelSourcePaths.properties
+        Outputs
+</pre>
+</p>
+
+<h5>Working Directory &amp; Paths</h5>
+
+<p>The runtime working directory for AnyLogic models is set as the directory
+where the <em>source</em> ALP file is which is being run. Thus, when running an
+experiment using the canonical file structure above, the working directory is
+the <code>ModelX/Experiments</code> folder, and your
+<code>modelSourcePaths.properties</code> entries should be as below:
+
+<pre>
+ModelVersionFileDir = ../Sim
+SimSourcePath = ../Sim
+</pre>
+</p>
+
+<h5>Coding of Top-Level Agent</h5>
+
+<div class="sideNote">You may have multiple possible top-level Agents for your
+model (e.g., if you have one with additional visualisation to another, which you
+can see in the <a href="#exampleModels">example model</a>). In this case, you
+will need to code each of them as specified here. At run-time, JSIT makes sure
+that only the Agent initialised first (the one most nested in the Agent
+hierarchy for this model) will actually initialise JSIT.</div>
+
+<p>The top-level Agent in your simulation ALP file needs to be a subclass of
+<code>uk.ac.soton.simulation.jsit.anylogic.MainModel_AnyLogic</code>, which is
+itself a subclass of <code>Agent</code>. (Set this in the 'Extends other agent'
+section of the Advanced Agent properties.) Doing this ensures that JSIT is
+initialised at the earliest possible moment so that, for example, messages can
+be logged in initialisation logic.</p>
+
+<div class="sideNote"><code>MainModel</code> is the
+<code>uk.ac.soton.simulation.jsit.core.MainModel</code> interface in the JSIT
+source code.</div>
+
+<p>This <code>MainModel_AnyLogic</code> superclass provides default
+implementations for the <code>MainModel</code> methods (AnyLogic functions)
+which define some aspects of how JSIT is configured.  You can override these
+(provide your own implementation in an AnyLogic function) to adjust this default
+behaviour. Some relate to aspects in later sections, and so are discussed there.
+Ones you might want to override for the core JSIT setup are as below:
+
+<ul>
+
+<li><b><code>getInputsBasePath</code></b> (no parameters): returns a
+<code>String</code> which gives the relative path to your inputs directory
+(relative to the base Java working directory when a model experiment is run).
+This defaults to <code>Inputs</code> which matches the example directory
+structure.</li>
+
+<li><b><code>getOutputsBasePath</code></b> (no parameters): returns a
+<code>String</code> which gives the relative path to your outputs directory
+(relative to the base Java working directory when a model experiment is run).
+This defaults to <code>Outputs</code> which matches the example directory
+structure.</li>
+
+<li><b><code>runSpecificEnvironmentSetup</code></b> (no parameters and no return
+value): performs any run-specific (or model-specific) setup logic that the
+modeller wants to do at this early JSIT initialisation stage. Defaults to doing
+nothing.</li>
+
+</ul>
+</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<h4 id="setupRaw">Raw Implementation</h4>
+
+<p>As outlined in Figure 1, you will need to implement your own subclasses of
+the JSIT <code>ModelInitialiser</code> and <code>Sampler</code> classes. To get
+a feel for how that can be done, have a look at the <a
+href="https://github.com/sprossiter/JSIT_DemoMASON">MASON-based demo
+model</code></a>.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="logging">Logging</h3>
+
+<p>This is a standard process for any non-AnyLogic model, using SLF4J classes.
+However, AnyLogic currently has issues with its threading strategy for models
+which means the normal process cannot be used and an alternative method is
+required.</p>
+
+<h4 id="loggingNormal">Standard Process</h4>
+
+<p>This is the normal way that SLF4J and Logback would be used; the <a
+href="http://logback.qos.ch/manual/index.html">Logback manual</a> can be
+consulted for further detail.</p>
+
+<p>Any classes that need to log messages should have the following code
+(assuming a class name of <code>ModelComponentA</code> here):
+
+<pre>
+import org.slf4j.*;
+
+private static final Logger logger
+                = LoggerFactory.getLogger(ModelComponentA.class);
+</pre>
+
+</p>
+
+<p>To log a message of a particular level (<code>Error, Warning, Info, Debug,
+Trace</code>), use code similar to the below (which also shows how you can use
+<code>if</code> tests to avoid the overhead of constructing the message if that
+level is not enabled at run-time, and how to use the Logback-specific
+<code>{}</code> syntax in message strings to 'fill-in' variable values rather
+than using string concatenation):
+
+<pre>
+logger.error("Something's gone horribly wrong");
+logger.warn("Something might have gone horribly wrong");
+logger.info("Have wangled wodger {} at time {}", wodgerID, currTime);
+if (logger.isDebugEnabled()) {
+    logger.debug("My complex debug of {}, {}, {} and {}", a, b, c, d);
+}
+if (logger.isTraceEnabled()) {
+    logger.trace("My super-complex trace of {}, {} and {}", x, y, z);
+}
+</pre>
+</p>
+
+<p>JSIT creates per-run diagnostic log files in timestamped folders within your
+outputs folder.</p>
+
+<h4 id=loggingAnyLogic">AnyLogic Process</h4>
+
+<p>Simulation objects (which may be AnyLogic Agents or not) should get their
+relevant <code>Logger</code> instance via the <code>getLogger(Object obj)</code>
+method of <code>MainModel_AnyLogic</code>, passing themselves as the
+<code>obj</code> parameter. This requires access to the
+<code>MainModel_AnyLogic</code> 'root' instance that this simulation object is
+part of. To help with this there are two static helper methods in
+<code>MainModel_AnyLogic</code>: <code>getAgentLogger(Agent agent)</code> and
+<code>getNonAgentLogger(Object obj, Agent anyModelAgent)</code>.</p>
+
+<div class="sideNote">I hope to lift the restriction on getting the
+<code>Logger</code> instance in each code block soon!</div>
+
+<p><em>Currently, models should get this <code>Logger</code> instance at the
+start of each block of code which will use logging</em>; it should <em>not</em>
+be stored as a field or AnyLogic variable in the object. (You can also get it
+before, or as part of, each actual logging call but that is wasteful.)</p>
+
+<div class="sideNote">The problem with AnyLogic is that most logging solutions
+expect that threads identify the separate 'processes' to be logged. In the case
+of multi-run simulation experiments, JSIT (and the underlying Logback framework)
+requires that each (single-threaded) run is within the same thread or a
+(sequential) set of threads with the same parent: Mapped Diagnostic Contexts
+(MDCs) are used to tie threads with runs (and thus specific per-run output
+locations).
+
+<br /><br />
+
+However, AnyLogic runs can jump between threads with no common parent in a
+variety of ways: be initialised in a different thread to that which it runs in;
+when the model is paused and resumed; and when run-until or run-for is used. The
+first two of these cases can be trapped by (clumsy) extra user code, but the
+third cannot. The AnyLogic solution continues to use Logback and MDCs under the
+covers, but checks for a change of thread before any logging (and restores saved
+MDC keys if so).</div>
+
+<p>The <code>Logger</code> instance is then used as normal to log messages. Some
+sample code is as below:
+
+<pre>
+// In a needs-logging code block for an Agent, such as an AnyLogic function,
+// Agent action or similar (e.g., Event Action code)
+
+// Using static helper method
+Logger logger = MainModel_AnyLogic.getAgentLogger(this);
+logger.warn("My super-important warning message!");
+</pre>
+
+or
+
+<pre>
+// In a needs-logging code block for a non-agent (e.g., method in a 'raw' Java
+// class). This object needs a reference to any Agent in the model
+
+// Using static helper method
+Logger logger = MainModel_AnyLogic.getNonAgentLogger(this, myAgentRef);
+logger.info("Have woogled the wodger");
+</pre>
+</p>
+
+<p>You will need import statements for the relevant classes, which is easiest to
+do for their entire packages as below. (For AnyLogic Agents, this is in the
+Advanced Java properties.)
+
+<pre>
+import org.slf4j.*;
+import uk.ac.soton.simulation.jsit.anylogic.*;
+</pre>
+</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="repro">Run Reproducibility</h3>
+
+<p>As long as your model version file and model source paths file are in place,
+there is nothing else to do unless you are not using a helper library. Settings
+for the run will be produced in a <code>settings.xml</code> XML file in your
+outputs folder (in a run-specific sub-folder, along with your logs). This
+settings file includes:
+
+<ul>
+
+<li>information from the model version file (e.g., model name/version and
+location of the source code for the model);</li>
+
+<li>information on the model environment (e.g., JVM version and Java libraries
+used);</li>
+
+<li>a checksum (MD5 hash) for all the runtime code used in this run;</li>
+
+<li>all model parameters for this run;</li>
+
+<li>all the JSIT stochastic elements for the model and any stochasticity control
+settings applied for this run (see the <a href="#stochControl">stochasticity
+control section</a>).</li>
+
+</ul>
+
+<div class="sideNote">When running simulations via an IDE, you can sometimes get
+extra libraries added to the runtime classpath which you don't really want/need
+(e.g., JUnit libraries with Eclipse). These will affect the checksum, so check
+the settings file carefully (where it lists all libraries used).</div>
+
+In particular, the checksum can be used to check if two runs definitely used
+exactly the same runtime code.
+</p>
+
+<p>There are also runtime checks as to whether the source code for the model has
+been changed from that 'registered' via version-control (which may mean this run
+is not reproducible); see the <a href="#vc">Model Version Control</a>
+section.</p>
+
+<h4 id="reproAnyLogic">AnyLogic (via helper library)</h4>
+
+<p>For an AnyLogic model (when run from the AnyLogic client rather than
+exported), the source code <em>is</em> the only code that the user maintains.
+(This is built and compiled by AnyLogic automatically before any run.) Thus, the
+JSIT run reproducibility and version control functionality is particularly
+useful since the source 'is' the model and distinctions between source and
+runtime code are less problematic.</p>
+
+<p>The helper library uses the code structure generated by AnyLogic to
+automatically identify all the model's parameters (i.e., the Parameters in the
+top-level Agent).</p>
+
+<h4 id="reproRaw">Raw Implementation</h4>
+
+<p>You will need to include code in your <code>ModelInitialiser</code> subclass
+to identify and prepare for serialisation (using XStream) your model's parameter
+values for this run. This typically means using a Java class for your model's
+parameters which just has fields for the parameters (and nothing else) so that
+XStream will serialise that cleanly.</p>
+
+<p>To get a feel for how that can be done, have a look at the <a
+href="https://github.com/sprossiter/JSIT_DemoMASON">MASON-based demo
+model</code></a>.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="vc">Model Version Control</h3>
+
+<p>As discussed earlier, you specify in your model version file which version
+control system you are using for your model. You use your commit script to
+commit (when using a VCS) or checkpoint (when not) your model. (I'll just refer
+to 'commits' generally in what follows, although the non-VCS case is technically
+something slightly different.)</p>
+
+<p>Your commit message should be specified in a <code>workingChanges.txt</code>
+file in the same directory as the commit script (which is the root directory of
+the commit). After your commit, these changes will be appended to the
+<code>jsitCommitHistory.txt</code> (which is created if it does not exist)
+together with a header showing the commit time and source directories checksum
+(see later). You can therefore use this second file as a history of all your
+commits, which you could potentially store in the VCS as well.</p>
+
+<div class="sideNote">Future versions of JSIT will allow you to specify more
+precisely what runtime checks you want and when they should be an error (rather
+than a warning). These improved capabilities will also more elegantly handle the
+distinction between 'real' source code and libraries, and give the user more
+control over how the processing works.
+
+<br /><br />
+
+There is currently a basic assumption that the source code directories you
+specify do, in fact, contain the version-controlled source for what is being
+run. Future versions of JSIT will attempt to check this a little more
+rigorously. (A <em>completely</em> accurate check is not really possible without
+JSIT actually compiling your code and checking the outcomes.)</div>
+
+<p>At runtime, if you specified the <code>SimSourcePath</code> property in your
+model source paths file, JSIT will check whether the source code for the model
+has been changed from its state at the last commit, and will issue a warning
+message if so (which means that you may not be able to reproduce this run of the
+model).</p> 
+
+<p><b>NB</b>: The source code for your model is taken as <em>all</em> the files
+in your source directories, <em>whether they are under version-control or
+not</em>. (Your model version file and any hidden folders, such as those used by
+SVN, are ignored.) This is normally what you want to happen because your source
+folders may include other not-in-the-VCS code that your model uses at runtime;
+typically third-party libraries (which it is not best-practice to include in the
+VCS). You want to check that <em>none</em> of these files have been altered at
+runtime from their state at commit-time. However, having not-in-VCS code in your
+source folders is not ideal from a run reproducibility perspective because you
+have no straightforward way of retrieving these non-VCS files if you want to
+reproduce a run. However, as the <a href="#repro">Run Reproducibility</a>
+section states, JSIT does record all the libraries (and other classpath folders)
+used for a run (but not currently any provenance of where these files came from)
+which will help in reproducing the code.</p>
+
+<h4 id="vcNoVCS">No Version Control System (model 'checkpointing')</h4>
+
+<p>When you run your commit script it will checkpoint your simulation source
+directories by calculating a checksum (MD5 hash) for its contents and storing
+this, together with a checkpoint timestamp, in the model version file. This
+checksum excludes your model version file and any hidden files. If, at
+runtime, the files on the simulation source code path do not match this
+checksum, the source code has changed and is flagged.</p>
+
+<p>You can therefore use the batch script as a 'poor man's
+version-control-system' to checkpoint versions of the model code. (If you want
+these different versions to be retrievable in future, it is your responsibility
+to store them in some suitable way; this is what a VCS is designed for, so I
+strongly recommend you use one instead!) By looking at the model version file in
+a particular copy of the model code, you can see which checkpointed version it
+is.</p>
+
+<h4 id="vcSVN">Subversion</h4>
+
+<p>When you run your commit script it will commit your simulation source code to
+the SVN server and, in the model version file, store a commit timestamp and
+checksum (MD5 hash) for the source code directories (as specified in the model
+source paths configuration file). Using SVN keyword substitution, the model
+version file also stores details of the on-server URL and SVN revision for the
+commit.</p>
+
+<p>When running a model, you may have checked-out source code (i.e., with SVN
+metadata) or exported source code (i.e., just the 'plain' source files). In both
+cases, JSIT will check whether the source code has changed checksum (which, as
+mentioned earlier, will include any not-in-VCS code). Where you have checked-out
+source, JSIT will also check if this source has been modified from what was
+checked out (via SVN operations), so you can determine if any changes are in
+VCS-controlled source or elsewhere.</p>
+
+<p>If you forget and commit the source code without using the batch script, just
+run it later to register a follow-on JSIT commit.</p>
+
+<p><b>Note</b>: It is your choice how you structure your source directories, and
+which you specify in the model source paths configuration file. If you want to
+only specify directories which include in-VCS code you can do, but that means
+any not-in-VCS files used at runtime (e.g., JAR libraries) will not be included
+in the source checks. In any case, you can use the separate checksum of all
+runtime code in your JSIT-produced per-run settings file (see <a
+href="#repro">Run Reproducibility</a>) to determine if the total set of runtime
+code has changed from a previous run.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="stochControl">Test-Oriented Stochasticity Control</h3>
+
+<p>Each stochastic item in your simulation (e.g., a normal distribution or
+simple Bernoulli trial probability) is specified as an instance of a JSIT
+<code>StochasticItem</code> subclass. Typically all instances of a model
+component (for the same model run) will share an instance, though there may be
+cases where you want per-instance distributions. The actual runtime sampling is
+still done by the toolkit you are using; by using the JSIT 'wrappers', you gain
+a consistent API and, more importantly, the ability to collapse selected items
+to a single 'mid' value (typically the mean) for a run, which makes testing and
+model exploration significantly easier in many cases.</p>
+
+<p>The runtime control is done by supplying a <span class="term">stochasticity
+control file</span> in your inputs directory called
+<code>stochControl.properties</code>. A template is provided in the
+<code>config</code> directory of the JSIT distribution (with comments there
+detailing the format).</p>
+
+<p>Because some simulations may have multiple model runs in parallel (within the
+same JVM) this means that we <em>cannot</em> assume that all instances of a
+model component (Java class) are part of the same model. Thus, stochastic items
+are registered per-model-instance and stored/accessed via a <span
+class="term">stochastic accessor</span>. For the same reasons as with logging,
+AnyLogic models should use a different form of accessor to non-AnyLogic
+models.</p>
+
+<p>As well as standard distributions, JSIT also provides some useful classes for
+custom distributions and 'distribution lookups': a set of distributions (of the
+same type) keyed by a set of Java enumerations. The latter can be used, for
+example, to represent a lookup of death rates (Bernoulli distributions) by
+age-range and gender classifications.</p>
+
+<h4 id="stochControlNormal">Standard Process</h4>
+
+<p>Have a look at the <a
+href="https://github.com/sprossiter/JSIT_DemoMASON">MASON-based demo
+model</code></a>.</p>
+
+<h4 id=stochControlAnyLogic">AnyLogic Process</h4>
+
+<p>Have a look at the <a
+href="https://sourceforge.net/p/amdhealthsocialcaresim/">AnyLogic-based demo
+model</code></a>.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="domainEvents">Domain Events &amp; Event-Driven Separation</h3>
+
+<p>Models that want to use JSIT events should create an instance of
+<code>EventManager</code> from the JSIT core library. Model components should
+implement the JSIT <code>EventSource</code> interface if they produce JSIT
+events, and the <code>EventReceiver</code> interface if they receive them. (They
+can do both.)</p>
+
+<p>Components that want to receive events also need to register with the
+<code>EventManager</code> for the events they are interested in. There are two
+<code>register</code> methods: one to register for all events from a class
+(i.e., from all instances), where you pass the <code>Class</code> of the source;
+and one to register for events from a particular class instance, where you pass
+the specific <code>EventSource</code> instance.</p>
+
+<p>See the <a href="#exampleModels">example models</a> for more details.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr /><hr />
+
+</body>
+</html>
+
