@@ -22,7 +22,7 @@
     ****************************************************************************
     
 -->
-<project name="JSIT" default="buildDist" basedir="../../..">
+<project name="JSIT" default="buildDistAndWeb" basedir="../../..">
 
     <!-- =================CONFIG PROPERTIES================= -->
 
@@ -56,7 +56,8 @@
     <!-- General build variables -->
 
     <property name="jsit.ver" value="0.2-SNAPSHOT" />
-    <property name="build.area" value="buildOutputs/JSIT-${jsit.ver}" />
+    <property name="build.area.dist" value="buildOutputs/dist/JSIT-${jsit.ver}" />
+    <property name="build.area.ghpages" value="buildOutputs/gh-pages/JSIT-${jsit.ver}" />
 
     <!-- JSIT Core dependency versions -->
 
@@ -138,6 +139,24 @@
         </exec>
     </target>
 
+    <target name="buildDistAndWeb" description="Build JSIT distribution and Project Pages"
+            depends="buildDist">
+
+        <!-- Clean gh-pages area
+             Copy Javadoc and (renamed) user guide in
+        -->
+
+        <delete quiet="true" dir="${build.area.ghpages}" />
+        <mkdir dir="${build.area.ghpages}" />
+        <copy todir="${build.area.ghpages}">
+            <fileset dir="${build.area.dist}/resources/docs"
+                     excludes="userGuide.htm, *.dia" />
+        </copy>
+        <copy file="${build.area.dist}/resources/docs/userGuide.htm"
+              tofile="${build.area.ghpages}/index.htm" overwrite="false" />
+
+    </target>
+
     <target name="buildDist" description="Build JSIT distribution"
             depends="getDependencies, buildLibSVN-1.6, buildLibSVN-1.8">
 
@@ -145,18 +164,19 @@
              Build JSIT JARs
              Build Javadoc
              Copy dependencies and licenses
+             Create (copy/adjust) Project Pages (gh-pages branch) material
         -->
 
         <!-- Clean build area and create build temp area (which is NOT cleaned) if needed -->
 
-        <delete quiet="true" dir="${build.area}" />
-        <mkdir dir="${build.area}" />
+        <delete quiet="true" dir="${build.area.dist}" />
+        <mkdir dir="${build.area.dist}" />
         <mkdir dir="buildTemp/bin" />
         <!-- Creates parents and does nothing if exists -->
 
         <!-- Main non-source-code copy -->
 
-        <copy todir="${build.area}">
+        <copy todir="${build.area.dist}">
             <fileset dir="src/main" includes="config/**,resources/**,scripts/**" />
             <fileset dir="." includes="*.txt" excludes="changes.txt" />
         </copy>
@@ -165,14 +185,14 @@
              Moronically, exec doesn't use the dir attribute for the output path so that
              needs expressing explicitly -->
 
-        <copy file="README_Template.rst" tofile="${build.area}/README.rst" overwrite="false">
+        <copy file="README_Template.rst" tofile="${build.area.dist}/README.rst" overwrite="false">
             <filterset>
                 <filter token="RESOURCES_PATH" value="resources" />
                 <filter token="USER_GUIDE_PATH" value="resources/docs/userGuide.htm" />
             </filterset>
         </copy>
-        <exec dir="${build.area}" resolveexecutable="true" executable="rst2html"
-              output="${build.area}/README.htm" failonerror="true">
+        <exec dir="${build.area.dist}" resolveexecutable="true" executable="rst2html"
+              output="${build.area.dist}/README.htm" failonerror="true">
             <arg value="README.rst" />
         </exec>
 
@@ -188,19 +208,19 @@
         <!-- Create JSIT JARs (with renamed license files) and Javadoc -->
 
         <jar basedir="buildTemp/bin"
-             destfile="${build.area}/lib/jsit-core-${jsit.ver}.jar"
+             destfile="${build.area.dist}/lib/jsit-core-${jsit.ver}.jar"
              includes="uk/ac/soton/simulation/jsit/core/*.class"
              compress="true" encoding="UTF-8" update="true" />
 
         <jar basedir="buildTemp/bin"
-             destfile="${build.area}/lib/jsit-anylogic-${jsit.ver}.jar"
+             destfile="${build.area.dist}/lib/jsit-anylogic-${jsit.ver}.jar"
              includes="uk/ac/soton/simulation/jsit/anylogic/*.class"
              compress="true" encoding="UTF-8" update="true" />
 
-        <copy file="lgpl.txt" tofile="${build.area}/lib/jsit-${jsit.ver}_LICENSE.txt" />
-        <copy file="gpl.txt" tofile="${build.area}/lib/jsit-${jsit.ver}_LICENSE_GPL.txt" />
+        <copy file="lgpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE.txt" />
+        <copy file="gpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE_GPL.txt" />
 
-        <javadoc sourcepath="src/main/java" destdir="${build.area}/javadoc"
+        <javadoc sourcepath="src/main/java" destdir="${build.area.dist}/resources/docs/javadoc"
                  access="public" Verbose="true" Author="true" Version="true"
                  Use="true" failonerror="true"
                  Doctitle="JSIT ${jsit.ver} API Documentation"
@@ -210,7 +230,7 @@
 
         <!-- Copy to-be-distributed dependencies and licenses in -->
 
-        <copy todir="${build.area}/lib">
+        <copy todir="${build.area.dist}/lib">
             <resources refid="dist.libs" />
         </copy>
 
