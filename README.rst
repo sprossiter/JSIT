@@ -122,5 +122,5 @@ covered by the `AnyLogic Engine Runtime License Agreement`_.
 .. _attributions file: attributions.txt
 .. _LGPL license: lgpl.txt
 .. _GPL license: gpl.txt
-.. _User Guide: src/main/resources/docs/userGuide.htm
+.. _User Guide: http://sprossiter.github.io/JSIT
 .. _AnyLogic Engine Runtime License Agreement: src/main/resources/AnyLogicEngineRuntimeLicenseAgreement.html

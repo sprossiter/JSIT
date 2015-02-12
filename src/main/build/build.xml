@@ -129,6 +129,8 @@
         <copy file="README_Template.rst" tofile="README.rst" overwrite="true">
             <filterset>
                 <filter token="RESOURCES_PATH" value="src/main/resources" />
+                <filter token="USER_GUIDE_PATH"
+                        value="http://sprossiter.github.io/JSIT" />
             </filterset>
         </copy>
         <exec dir="." executable="rst2html" output="README.htm" failonerror="true">
@@ -166,6 +168,7 @@
         <copy file="README_Template.rst" tofile="${build.area}/README.rst" overwrite="false">
             <filterset>
                 <filter token="RESOURCES_PATH" value="resources" />
+                <filter token="USER_GUIDE_PATH" value="resources/docs/userGuide.htm" />
             </filterset>
         </copy>
         <exec dir="${build.area}" resolveexecutable="true" executable="rst2html"

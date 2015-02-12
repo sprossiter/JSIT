@@ -3,6 +3,7 @@
 *.swp
 *.class
 workingChanges.txt
+README.htm
 buildOutputs/
 buildTemp/
 /bin/
