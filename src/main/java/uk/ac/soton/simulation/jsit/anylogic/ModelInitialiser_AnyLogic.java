@@ -48,6 +48,10 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
 
     private static final long serialVersionUID = 1L;
     
+    /*
+     * XStream converter for AnyLogic HyperArray instances which avoids processing
+     * internal AnyLogic fields
+     */
     private static class AnyLogicHyperArrayConverter implements Converter {
 
         public boolean canConvert(@SuppressWarnings("rawtypes") Class clazz) {
@@ -81,39 +85,10 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
 
     };
     
-    
-    // ***************************** Static Methods ****************************************
-    
     /*
-     * Static factory method that ensures an existing initialiser is returned if an embedded class or subclass
-     * already initialised the model
+     * XStream converter for any MainModel_AnyLogic subclass
      */
-    static ModelInitialiser_AnyLogic getInitialiserForRun(
-            Experiment<?> experiment,
-            MainModel_AnyLogic modelMain) {
-        
-        ModelInitialiser initialiser = ModelInitialiser.getExistingInitialiser(modelMain);
-        if (initialiser == null) {            // Not already initialised by embedded/subclass
-            initialiser = new ModelInitialiser_AnyLogic(experiment, modelMain);
-            logger.debug("Completed JSIT model initialisation for run ID " + initialiser.getRunID());
-        }
-        else {
-            logger.debug("Reusing JSIT model initialiser from embedded class or subclass for run ID "
-                         + initialiser.getRunID());
-        }
-        
-        return (ModelInitialiser_AnyLogic) initialiser;
-        
-    }
-    
-    
-    // ************************** Instance Fields *************************************
-    
-    private RunEnvironmentSettingsAnyLogic envSettings;    
-
-    private class AnyLogicMainConverter implements Converter {
-            
-        // Convert any MainModel_AnyLogic subclass
+    private static class AnyLogicMainConverter implements Converter {
         
         public boolean canConvert(@SuppressWarnings("rawtypes") Class clazz) {
             return MainModel_AnyLogic.class.isAssignableFrom(clazz);
@@ -128,6 +103,7 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
             // set each parameter which we can use to identify them all.)
             
             Class<?> c = value.getClass();
+            MainModel_AnyLogic mainModel = (MainModel_AnyLogic) value;
             Method[] methods = c.getMethods();
             String currParmName = null;
             Object currParmVal = null;
@@ -139,7 +115,7 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
                     logger.debug("Processing parm name <" + currParmName + ">");
                     writer.startNode(currParmName);
                     try {
-                        currParmVal = c.getField(currParmName).get(modelMain);
+                        currParmVal = c.getField(currParmName).get(mainModel);
                     }
                     catch (NoSuchFieldException e) {
                         // Assume this is a set_ method written by the user not referring to a field
@@ -170,6 +146,36 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
         }
         
     };
+    
+    
+    // ***************************** Static Methods ****************************************
+    
+    /*
+     * Static factory method that ensures an existing initialiser is returned if an embedded class or subclass
+     * already initialised the model
+     */
+    static ModelInitialiser_AnyLogic getInitialiserForRun(
+            Experiment<?> experiment,
+            MainModel_AnyLogic modelMain) {
+        
+        ModelInitialiser initialiser = ModelInitialiser.getExistingInitialiser(modelMain);
+        if (initialiser == null) {            // Not already initialised by embedded/subclass
+            initialiser = new ModelInitialiser_AnyLogic(experiment, modelMain);
+            logger.debug("Completed JSIT model initialisation for run ID " + initialiser.getRunID());
+        }
+        else {
+            logger.debug("Reusing JSIT model initialiser from embedded class or subclass for run ID "
+                         + initialiser.getRunID());
+        }
+        
+        return (ModelInitialiser_AnyLogic) initialiser;
+        
+    }
+    
+    
+    // ************************** Instance Fields *************************************
+    
+    private RunEnvironmentSettingsAnyLogic envSettings;
         
     
     // *************************** Constructors ***************************************
@@ -178,7 +184,7 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
      * Private constructor: static factory method for instantiation
      */
     private ModelInitialiser_AnyLogic(Experiment<?> experiment,
-                                       MainModel_AnyLogic mainModel) {
+                                      MainModel_AnyLogic mainModel) {
         
         super(experiment.getClass().getSimpleName(), mainModel);
         this.envSettings = new RunEnvironmentSettingsAnyLogic(mainModel);

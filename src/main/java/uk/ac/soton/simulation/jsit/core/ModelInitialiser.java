@@ -265,7 +265,7 @@ public abstract class ModelInitialiser {
      * input parameters and then initialise the environment
      */
     public ModelInitialiser(String experimentName,
-                    MainModel modelMain) {
+                            MainModel modelMain) {
         
         this.modelStartTime = System.currentTimeMillis();
         if (modelMain == null || experimentName == null || experimentName.trim().equals("")) {
