@@ -244,8 +244,8 @@ public abstract class ModelInitialiser {
 
     // Registered stoch items for this run and flag for whether registrations finalised
 
-    private ArrayList<StochasticItem> registeredStochItems
-                            = new ArrayList<StochasticItem>();
+    private ArrayList<AbstractStochasticItem> registeredStochItems
+                            = new ArrayList<AbstractStochasticItem>();
     private boolean registrationsFinalised = false;
 
     // Properties object loaded from stochastic control settings file
@@ -380,8 +380,8 @@ public abstract class ModelInitialiser {
         // object. (Stochastic items can be serialised at this point because they may be model
         // parameters.)
         xstream = new XStream();
-        xstream.omitField(StochasticItem.class, "accessor");
-        xstream.omitField(StochasticItem.class, "sampler");
+        xstream.omitField(AbstractStochasticItem.class, "accessor");
+        xstream.omitField(AbstractStochasticItem.class, "sampler");
         xstream.alias("environmentSettings", RunEnvironmentSettings.class);
         xstream.alias("libraryDetail", ModelVersioningAssistant.LibraryDetail.class);
         // TODO: Do this generically via reflection or some static list
@@ -442,17 +442,17 @@ public abstract class ModelInitialiser {
         int i = 0;
                
         try {
-            for (StochasticItem stochItem : registeredStochItems) {
+            for (AbstractStochasticItem stochItem : registeredStochItems) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Writing stochastic item " + stochItem.getAccessor().getFullID()
+                    logger.debug("Writing stochastic item " + stochItem.getAccessInfo().getFullID()
                                  + " to settings file");
                 }
                 xmlString = new StringBuilder();
                 if (i == 0) {           // First registration
                     xmlString.append("\n<stochasticItems>\n");
                 }           
-                xmlString.append("  <item id=\"" + stochItem.getAccessor().getFullID() + "\" sampleMode=\""
-                                 + stochItem.getAccessor().getSampleMode() + "\">\n");
+                xmlString.append("  <item id=\"" + stochItem.getAccessInfo().getFullID() + "\" sampleMode=\""
+                                 + stochItem.getAccessInfo().getSampleMode() + "\">\n");
                 String[] itemLines = xstream.toXML(stochItem).split("\n");
                 for (String line : itemLines) {
                     xmlString.append("    ");
@@ -492,9 +492,9 @@ public abstract class ModelInitialiser {
     
         logger.debug("Main model destruction processing for run ID " + runID);
         // Deregister (remove) any stoch items for the run
-        for (StochasticItem stochItem : registeredStochItems) {
+        for (AbstractStochasticItem stochItem : registeredStochItems) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Deregistering stochastic item " + stochItem.getAccessor().getFullID());
+                logger.debug("Deregistering stochastic item " + stochItem.getAccessInfo().getFullID());
             }
             stochItem.deregisterItem();
         }
@@ -520,12 +520,15 @@ public abstract class ModelInitialiser {
     
     // ******************** Protected/Package-Access Instance Methods ******************
  
-    /*
+    /**
+     * Method exposed for technical reasons. Will hopefully be removed/made non-public
+     * in future releases.
+     * 
      * Register a dist or lookup, which involves setting its sample mode and checking for
      * double registrations. Returns the sampler so that the caller (a stoch accessor)
-     * can register itself and the sampler in the stoch item
+     * can register itself and the sampler in the stoch item.
      */
-    public Sampler registerStochItem(StochasticItem stochItem) {
+    public Sampler registerStochItem(AbstractStochasticItem stochItem) {
 
         if (registrationsFinalised) {
             throw new IllegalStateException("Stochastic registrations already finalised by user");
@@ -536,8 +539,8 @@ public abstract class ModelInitialiser {
             assert sampler != null;
         }
 
-        String qualifiedID = stochItem.getAccessor().getFullID();    
-        String classAllID = stochItem.getAccessor().getOwnerName() + ".ALL";            
+        String qualifiedID = stochItem.getAccessInfo().getFullID();    
+        String classAllID = stochItem.getAccessInfo().getOwnerName() + ".ALL";            
         if (registeredStochItems.contains(stochItem)) {
             throw new IllegalArgumentException("Stochastic item " + qualifiedID
                     + " has already been registered, possibly by another class");
@@ -557,7 +560,7 @@ public abstract class ModelInitialiser {
             }
         }
 
-        stochItem.getAccessor().setSampleMode(mode);
+        stochItem.getAccessInfo().setSampleMode(mode);
         registeredStochItems.add(stochItem);
 
         String logMsg = qualifiedID + " stochastic item " + stochItem.toString()

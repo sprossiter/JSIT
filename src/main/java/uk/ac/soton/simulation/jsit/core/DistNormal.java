@@ -104,7 +104,7 @@ public class DistNormal extends DistributionContinuous implements Serializable {
     protected double sampleDoubleByMode() {
 
         Double sample = null;
-        Sampler.SampleMode mode = getAccessor().getSampleMode();
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
 
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleNormal(mean, sd);

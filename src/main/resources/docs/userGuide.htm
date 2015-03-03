@@ -35,7 +35,7 @@
 <h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
 <p class="subHeading"><b>JSIT Version: </b>0.2
 <br />
-<b>Last Updated: </b>12th February 2015</p>
+<b>Last Updated: </b>3rd March 2015</p>
 
 <h2>Contents</h2>
 
@@ -986,7 +986,7 @@ model</code></a>.</p>
 
 <p>This is a standard process for any non-AnyLogic model, using SLF4J classes.
 However, AnyLogic currently has issues with its threading strategy for models
-which means the normal process cannot be used and an alternative method is
+which means the normal process cannot be used, and an alternative method is
 required.</p>
 
 <h4 id="loggingNormal">Standard Process</h4>
@@ -1032,24 +1032,21 @@ outputs folder.</p>
 
 <h4 id=loggingAnyLogic">AnyLogic Process</h4>
 
-<p>Simulation objects (which may be AnyLogic Agents or not) should get their
-relevant <code>Logger</code> instance via the <code>getLogger(Object obj)</code>
-method of <code>MainModel_AnyLogic</code>, passing themselves as the
-<code>obj</code> parameter. This requires access to the
-<code>MainModel_AnyLogic</code> 'root' instance that this simulation object is
-part of. To help with this there are two static helper methods in
-<code>MainModel_AnyLogic</code>: <code>getAgentLogger(Agent agent)</code> and
-<code>getNonAgentLogger(Object obj, Agent anyModelAgent)</code>.</p>
+<div class="sideNote">This is all quite involved, though relatively
+straightforward once you understand it. It is worth looking at the 
+<a href="#exampleModels">example AnyLogic model</a> to see a specific example.
 
-<div class="sideNote">I hope to lift the restriction on getting the
-<code>Logger</code> instance in each code block soon!</div>
+<br /><br />
 
-<p><em>Currently, models should get this <code>Logger</code> instance at the
-start of each block of code which will use logging</em>; it should <em>not</em>
-be stored as a field or AnyLogic variable in the object. (You can also get it
-before, or as part of, each actual logging call but that is wasteful.)</p>
+You <em>can</em> still use the standard logging method,
+but the threading problems mean that log messages can end up going to a 'dummy'
+log file in a <code>missingOutputFolder</code> directory, instead of the proper
+log file for the run (and messages in this dummy file may come from multiple
+runs).
 
-<div class="sideNote">The problem with AnyLogic is that most logging solutions
+<br /><br />
+
+The problem with AnyLogic is that most logging solutions
 expect that threads identify the separate 'processes' to be logged. In the case
 of multi-run simulation experiments, JSIT (and the underlying Logback framework)
 requires that each (single-threaded) run is within the same thread or a
@@ -1067,33 +1064,105 @@ third cannot. The AnyLogic solution continues to use Logback and MDCs under the
 covers, but checks for a change of thread before any logging (and restores saved
 MDC keys if so).</div>
 
-<p>The <code>Logger</code> instance is then used as normal to log messages. Some
-sample code is as below:
+<p>Simulation objects (e.g., Agents) need to use <code>AnyLogicLogger</code>
+loggers instead of the normal SLF4J ones; these have exactly the same SLF4J
+interface (they implement the <code>Logger</code> interface), but the logging
+methods (like the <code>warn</code> and <code>info</code> variants) have code
+which works around the threading issues. They also add a special extra method
+<code>ensureExternalLoggingForBlock</code> (see the Javadoc for full details)
+which can be used to ensure that log messages from third-party libraries
+(including from JSIT itself) also avoid the problems.</p>
+
+<p>However, there needs to be one AnyLogic logger for
+<em>each run's set of instances for a class</em>, not one per class as in the
+standard approach. If you use multi-run Experiments with parallel execution,
+then you will get instances of your model classes (e.g., Agents) for multiple
+runs together in the same JVM. For example, a <code>Patient</code> Agent might
+have 10 instances as part of run 1, 20 as part of run 2 and 300 as part of run
+3. All 330 instances would potentially be existing at the same time in the same
+JVM. We need ways to separate out the AnyLogic loggers that runs 1-3 use.</p>
+
+<p>A run is identified by an instance of <code>MainModel_AnyLogic</code> which
+will be your 'top-level' class. (Actually, you want the closest enclosing
+instance of <code>MainModel_AnyLogic</code> since you can have multiple 'main
+models' to facilitate things like running the model with or without certain
+visualisations.)</p>
+
+<p>You have three alternatives:
+
+<ol>
+
+<li>If your classes (AnyLogic Agents or otherwise) only ever have one instance
+(they are singleton classes), you can include an <code>AnyLogicLogger</code>
+directly in that instance at startup time:
 
 <pre>
-// In a needs-logging code block for an Agent, such as an AnyLogic function,
-// Agent action or similar (e.g., Event Action code)
-
-// Using static helper method
-Logger logger = MainModel_AnyLogic.getAgentLogger(this);
-logger.warn("My super-important warning message!");
+logger = AnyLogicLoggerAccessor.getAccessorFreeAnyLogicLogger(
+                            TheComponent.class, mainModel);
 </pre>
 
-or
+where <code>TheComponent</code> is the name of the class, <code>mainModel</code>
+is a reference to the relevant <code>MainModel_AnyLogic</code> instance, and
+<code>logger</code> is your <code>AnyLogicLogger</code> instance (typically an
+AnyLogic variable).
+
+<li>If you are <b>sure</b> that you will never be using multi-run Experiments
+with runs in parallel, you can hold a single AnyLogic logger statically (i.e.,
+as part of the class and not the instance). The code is as above, but
+<code>logger</code> would be a <code>static</code> variable.</li>
+
+<li>Otherwise (the standard case), you use a statically-held
+<code>AnyLogicLoggerAccessor</code> to hold the loggers per run, and retrieve
+the correct one each time you need it:
 
 <pre>
-// In a needs-logging code block for a non-agent (e.g., method in a 'raw' Java
-// class). This object needs a reference to any Agent in the model
+// Set up 'empty' accessor
+loggerAccessor = new AnyLogicLoggerAccessor(TheComponent.class);
+// Add logger for this run (done once per run), passing main model reference
+loggerAccessor.addLoggerForRun(mainModel);
+// Later on when using the logger to log messages
+loggerAccessor.getLoggerForRun(mainModel).info("My important message");
+</pre>
 
-// Using static helper method
-Logger logger = MainModel_AnyLogic.getNonAgentLogger(this, myAgentRef);
-logger.info("Have woogled the wodger");
+Normally you'd set up the empty accessor as part of setting your static variable's
+initial value, and you'd add the per-run logger at simulation initialisation
+time. To help with the latter, <code>MainModel_AnyLogic</code> has a method
+<code>doAllStaticPerRunLoggerSetup</code> which your main model class (which is
+a subclass of <code>MainModel_AnyLogic</code>) must implement, and which will be
+called early on during model initialisation. It is expected
+that you will use this method to set up the per-run loggers for all classes that
+need one. (You can just directly do this for all the classes, or code your own
+functions (methods) so that the top-level class chains down through the embedded
+Agents, each of which adds its own per-run logger.)
+</li>
+
+</ol>
+
+<div class="sideNote">You can also use the AnyLogic-provided
+<code>get_Main()</code> or similar to get the enclosing instance, but some model
+designs may not have a fixed hierarchy of Agents for all runs, and thus there
+might not be a fixed main model 'parent' to hardcode here.
+
+<br /><br />
+
+The JSIT helper method just chains through the owners of the given Agent (via
+the AnyLogic <code>getOwner()</code> method) until a
+<code>MainModel_AnyLogic</code> instance is reached.</div>
+
+<p>To help in getting a <code>MainModel_AnyLogic</code> instance to set up and
+(in case 3) retrieve the logger, there is a static helper method in
+<code>MainModel_AnyLogic</code>: <code>getMainFor(Agent agent)</code>, so you
+can code your logging statements (including logger retrieval) something like
+
+<pre>
+loggerAccessor.getLoggerForRun(MainModel_AnyLogic.getMainFor(this))
+                                        .info("My important message");
 </pre>
 </p>
 
-<p>You will need import statements for the relevant classes, which is easiest to
-do for their entire packages as below. (For AnyLogic Agents, this is in the
-Advanced Java properties.)
+<p><b>NB</b>: You will need import statements for the relevant classes, which is
+easiest to do for their entire packages as below. (For AnyLogic Agents, this is
+in the Advanced Java properties.)
 
 <pre>
 import org.slf4j.*;
@@ -1279,7 +1348,7 @@ code has changed from a previous run.</p>
 
 <p>Each stochastic item in your simulation (e.g., a normal distribution or
 simple Bernoulli trial probability) is specified as an instance of a JSIT
-<code>StochasticItem</code> subclass. Typically all instances of a model
+<code>AbstractStochasticItem</code> subclass. Typically all instances of a model
 component (for the same model run) will share an instance, though there may be
 cases where you want per-instance distributions. The actual runtime sampling is
 still done by the toolkit you are using; by using the JSIT 'wrappers', you gain

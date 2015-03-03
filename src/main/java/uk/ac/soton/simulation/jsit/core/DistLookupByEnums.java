@@ -35,7 +35,7 @@ import com.thoughtworks.xstream.XStream;
  * @since 0.1
  */    
 public class DistLookupByEnums<D extends Distribution>
-                    extends StochasticItem implements Serializable {
+                    extends AbstractStochasticItem implements Serializable {
 
     // ************************ Static Fields *****************************************
 
@@ -81,7 +81,7 @@ public class DistLookupByEnums<D extends Distribution>
      * Add a given distribution to the lookup for the location specified by the given
      * set of enum-instance indices. Distributions can be replaced once added (by re-adding)
      */
-    public void addDist(D dist, Object... locationEnumIdx) {
+    public void addDist(D dist, @SuppressWarnings("rawtypes") Enum... locationEnumIdx) {
 
         multiDimMap.addValue(dist, locationEnumIdx);
 
@@ -91,7 +91,7 @@ public class DistLookupByEnums<D extends Distribution>
      * Retrieve a distribution from the lookup from the location specified by the given set of
      * enum-instance indices
      */
-    public D getDist(Object... locationEnumIdx) {
+    public D getDist(@SuppressWarnings("rawtypes") Enum... locationEnumIdx) {
 
         return multiDimMap.getValue(locationEnumIdx);
 
@@ -120,14 +120,14 @@ public class DistLookupByEnums<D extends Distribution>
      * Override accessor registration to also register for all the lookup's dists
      */
     @Override
-    public void registerAccessor(AbstractStochasticAccessor<?> accessor) {
+    public void registerAccessInfo(AbstractStochasticAccessInfo accessor) {
 
-        super.registerAccessor(accessor);
+        super.registerAccessInfo(accessor);
 
         List<D> allDists = getAllDists();
         for (D dist : allDists) {
             if (dist != null) {                // May be null entries
-                dist.registerAccessor(accessor);
+                dist.registerAccessInfo(accessor);
             }
         }
 

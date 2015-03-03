@@ -100,7 +100,7 @@ public class DistCustomCategorical<C extends Enum<C>>
     protected int sampleOrdinalByMode() {
 
         Integer sample = null;
-        Sampler.SampleMode mode = getAccessor().getSampleMode();
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
 
         double randomProb;        
         if (mode == Sampler.SampleMode.COLLAPSE_MID) {
@@ -111,7 +111,7 @@ public class DistCustomCategorical<C extends Enum<C>>
         }
 
         if (logger.isTraceEnabled()) {
-            logger.trace(getAccessor().getFullID() + " (Mode " + mode
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode
                     + "): sampling for cumulative prob " + randomProb
                     + " from " + this.toString());
         }

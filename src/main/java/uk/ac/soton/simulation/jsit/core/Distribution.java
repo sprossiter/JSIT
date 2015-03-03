@@ -26,7 +26,7 @@ import java.io.Serializable;
  * @author Stuart Rossiter
  * @since 0.1
  */    
-public abstract class Distribution extends StochasticItem
+public abstract class Distribution extends AbstractStochasticItem
                                    implements Serializable {
 
     // ************************ Static Fields *****************************************

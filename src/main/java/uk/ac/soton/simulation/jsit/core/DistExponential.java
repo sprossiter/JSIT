@@ -96,7 +96,7 @@ public class DistExponential extends DistributionContinuous
     protected double sampleDoubleByMode() {
 
         Double sample = null;
-        Sampler.SampleMode mode = getAccessor().getSampleMode();
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
 
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleExponential(mean);

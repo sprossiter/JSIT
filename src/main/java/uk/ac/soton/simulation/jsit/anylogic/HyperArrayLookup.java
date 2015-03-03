@@ -27,7 +27,7 @@ import com.anylogic.engine.Dimension;
 import org.slf4j.*;
 
 import uk.ac.soton.simulation.jsit.core.Sampler.*;
-import uk.ac.soton.simulation.jsit.core.StochasticItem;
+import uk.ac.soton.simulation.jsit.core.AbstractStochasticItem;
 
 /**
  * An enum-or-numeric-dimensions-indexed lookup array
@@ -57,7 +57,7 @@ import uk.ac.soton.simulation.jsit.core.StochasticItem;
  * the given Gender.
  * </ul>
  */
-public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
+public class HyperArrayLookup<C extends Enum<C>> extends AbstractStochasticItem
                                                  implements Serializable  {
 
     /*
@@ -165,7 +165,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
             printRow.deleteCharAt(printRow.length() - 1);
             printRow.append("]");
 
-            logger.trace(getAccessor().getFullID() + " (Mode " + mode
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode
                     + "): sampling for cumulative prob " + randomProb
                     + " from " + printRow.toString());
         }
@@ -188,7 +188,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
         }
 
         if (logger.isTraceEnabled()) {
-            logger.trace(getAccessor().getFullID() + " (Mode " + mode
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode
                     + "): sampled categorical outcome " + sample);
         }
 
@@ -228,7 +228,7 @@ public class HyperArrayLookup<C extends Enum<C>> extends StochasticItem
         }
 
         if (logger.isTraceEnabled()) {
-            logger.trace(getAccessor().getFullID() + " (Mode " + mode
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode
                     + "): sampled trial outcome " + sample + " for p=" + prob);
         }
         return sample;

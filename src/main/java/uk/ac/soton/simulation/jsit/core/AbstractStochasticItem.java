@@ -29,7 +29,7 @@ import java.io.Serializable;
  * @author Stuart Rossiter
  * @since 0.1
  */    
-public abstract class StochasticItem implements Serializable {
+public abstract class AbstractStochasticItem implements Serializable {
 
     // ************************ Static Fields *****************************************
 
@@ -38,16 +38,13 @@ public abstract class StochasticItem implements Serializable {
 
     // ************************ Instance Fields ***************************************
 
-    // TODO: Redesign so that stochastic items can be used without accessors when parallel
-    // runs will not be conducted in the same JVM (but still with a sample mode, currently
-    // linked to the accessor)
-    private AbstractStochasticAccessor<?> accessor = null;
+    private AbstractStochasticAccessInfo accessInfo = null;
     private Sampler sampler = null;            // Framework-specific sampler
 
 
     // ************************ Constructors ********************************************
 
-    protected StochasticItem() {
+    protected AbstractStochasticItem() {
 
         // Nothing to do
 
@@ -63,9 +60,9 @@ public abstract class StochasticItem implements Serializable {
      * @param accessor
      * The accessor that is being registered.
      */
-    public void registerAccessor(AbstractStochasticAccessor<?> accessor) {
+    public void registerAccessInfo(AbstractStochasticAccessInfo accessor) {
 
-        this.accessor = accessor;
+        this.accessInfo = accessor;
 
     }
 
@@ -83,16 +80,16 @@ public abstract class StochasticItem implements Serializable {
      */
     void deregisterItem() {
 
-        getAccessor().removeMe(this);
+        getAccessInfo().removeMe(this);
 
     }
 
-    protected AbstractStochasticAccessor<?> getAccessor() {
+    protected AbstractStochasticAccessInfo getAccessInfo() {
 
-        if (accessor == null) {
+        if (accessInfo == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");
         }
-        return accessor;
+        return accessInfo;
 
     }
 
@@ -101,7 +98,7 @@ public abstract class StochasticItem implements Serializable {
      */
     protected Sampler.SampleMode getSampleMode() {
 
-        return getAccessor().getSampleMode();
+        return getAccessInfo().getSampleMode();
 
     }
 

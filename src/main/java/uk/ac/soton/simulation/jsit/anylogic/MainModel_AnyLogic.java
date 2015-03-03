@@ -27,6 +27,7 @@ import com.anylogic.engine.Engine.State;
 
 import java.text.DecimalFormat;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -94,56 +95,21 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
         return (MainModel_AnyLogic) currAgent;
         
     }
-    
-    /**
-     * Static convenience method to get the appropriate Logger for a
-     * given Agent. This is equivalent to
-     * getMainFor(agent).getLogger(agent).
-     * 
-     * @param agent
-     * The Agent in question.
-     * 
-     * @return
-     * The appropriate Logger instance.
-     */
-    public static Logger getAgentLogger(Agent agent) {
-        
-        return getMainFor(agent).getLogger(agent);
-        
-    }
-    
-    /**
-     * Static convenience method to get the appropriate Logger for a
-     * given non-Agent. This is equivalent to
-     * getMainFor(anyModelAgent).getLogger(obj).
-     * 
-     * @param obj
-     * The Object to get the Logger for.
-     * @param anyModelAgent
-     * Any Agent that the caller (typically obj) has reference to for the simulation
-     * (used to get the MainModel_AnyLogic instance).
-     * 
-     * @return
-     * The appropriate Logger instance.
-     */
-    public static Logger getNonAgentLogger(Object obj, Agent anyModelAgent) {
-        
-        return getMainFor(anyModelAgent).getLogger(obj);
-        
-    }
 
 
     // ************************* Instance Fields ***************************************
+    
+    // The last runtime thread for this run known to be loggable-to (i.e., having had
+    // MDC keys set up). Accessed by AnyLogicLogger
+    
+    Thread lastLoggableThread = null;
+
 
     // JSIT model initialiser which will run (and initialise the environment) as
     // part of its instantiation in this common superclass' constructor
 
     private final ModelInitialiser jsitInitialiser;
     private final DecimalFormat timeFormatter = new DecimalFormat("00");
-
-    private Thread lastLoggableThread = null;
-    private final HashMap<Class<?>, Logger> loggersMap
-                                = new HashMap<Class<?>, Logger>();
 
     // Member class AnyLogic dynamic event (scheduled first at t=0) to ensure MDC
     // keys are set correctly at non-init model start (when the thread may have
@@ -162,7 +128,23 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
             super.execute();
             getModelInitialiser().possibleMDC_KeysLoss();
         }
-    };    
+    };
+    
+    
+    // Map to associate Logback Loggers for this run (which are typically not
+    // 1-1 with classes) with their AnyLogicLogger equivalents.
+
+    private final HashMap<Logger, AnyLogicLogger> anyLogicLoggersMap
+                                = new HashMap<Logger, AnyLogicLogger>();
+
+    // List of logger accessors set up for this run (automatically added to via
+    // AnyLogicLoggerAccessor's addLoggerForRun method) so that we can cleanly
+    // remove them at end-of-run
+    
+    private final ArrayList<AnyLogicLoggerAccessor> loggerAccessorList
+                                = new ArrayList<AnyLogicLoggerAccessor>();
+
+
 
     // ************************ Constructors *******************************************
 
@@ -234,7 +216,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
                 throw new RuntimeException("Can't create model settings file!", e);
             }
 
-            doAllStaticStochRegistration();                        // Hook for modeller to do any static reg
+            doAllStaticPerRunLoggerSetup();
+            doAllStaticStochRegistration();     // Hook for modeller to do any static reg
 
         }
 
@@ -246,13 +229,21 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     @Override
     public void onDestroy() {
 
-        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser
+        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser            
             // For single-run experiments, AnyLogic destroys in a special Model Exec Control
             // Handler thread which will lose MDC keys if the model wasn't paused earlier
             // (since pauses and destruction trigger the creation of this thread). We could
             // check the thread name to only rewrite the keys for single-run experiments, but
-            // no harm in doing it anyway and less dependent on AnyLogic internals
-            jsitInitialiser.possibleMDC_KeysLoss();       
+            // no harm in doing it anyway and less dependent on AnyLogic internals. This ensures
+            // that our non-accessor-wrapped Logger instance is OK for logging from
+            jsitInitialiser.possibleMDC_KeysLoss();
+            
+            // Remove all logger accessor entries for this run
+            for (AnyLogicLoggerAccessor a : loggerAccessorList) {
+                a.removeForRun(this);
+                logger.info("Cleaned up logger for class " + a.getOwner().getSimpleName()
+                            + ", run ID " + getModelInitialiser().getRunID());
+            }
             // Clean up initialiser. (May already have been done by embedded class or subclass.)
             jsitInitialiser.onMainModelDestroy();
         }
@@ -352,50 +343,23 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     }
 
     /**
-     * Default to no static stochastic registration so that AnyLogic modellers need
-     * only code an overriding method (AnyLogic function) if they are using stochastic
-     * control and need to do static registration.
+     * Any static-level stochastic item registration needs to be specified by the user
+     * subclass. (We could provide a default 'do nothing' implementation here so that
+     * AnyLogic modellers need only code an overriding method (AnyLogic function) if
+     * they are using stochastic control and need to do static registration. However,
+     * this is a common need and it is easy for modellers to forget to include this
+     * function, so we force it to be needed by making it abstract.)
      */
     @Override
-    public void doAllStaticStochRegistration() {
-        
-        // Do nothing
-        
-    }
+    public abstract void doAllStaticStochRegistration();
     
     // Other Public Instance Methods
     
     /**
-     * Get the appropriate Logger for a simulation Object (Agent or
-     * non-Agent). Modellers must use this for AnyLogic-compliant logging
-     * (rather than the normal private static Logger instance) to
-     * work round AnyLogic's model threading behaviour.
-     * 
-     * @param o
-     * The Object to get the Logger for.
-     *
-     * @return
-     * The appropriate Logger instance.
+     * Any static-level AnyLogic logger setup needs specifying in the user subclass. 
      */
-    public Logger getLogger(Object o) {
-
-        Class<?> loggingClass = o.getClass();
-        Logger logger = loggersMap.get(loggingClass);
-
-        if (logger == null) {           // Lazy map it
-            logger = LoggerFactory.getLogger(loggingClass);
-            loggersMap.put(loggingClass, logger);
-        }
-        assert logger != null;
-        Thread currThread = Thread.currentThread();
-        if (currThread != lastLoggableThread) {
-            getModelInitialiser().possibleMDC_KeysLoss();
-            lastLoggableThread = currThread;
-        }
-        return logger;
-
-    }
-
+    public abstract void doAllStaticPerRunLoggerSetup();
+    
     /**
      * Determine if model is initialising or not.
      * 
@@ -491,6 +455,43 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
         }
 
         return msgBuffer.toString();
+
+    }
+
+    
+    // ************ Protected / Package-Access Instance Methods ***************
+    
+    /*
+     * Return the appropriate AnyLogicLogger instance (in 1-1 mapping to a
+     * Logback logger) for this run; Logback Loggers will be shared across multiple
+     * runs.
+     */
+    AnyLogicLogger getPerRunAnyLogicLogger(Class<?> owner) {
+
+        assert owner != null;
+        Logger logbackLogger = LoggerFactory.getLogger(owner);
+        AnyLogicLogger anyLogicLogger = anyLogicLoggersMap.get(logbackLogger);
+        if (anyLogicLogger == null) {
+            anyLogicLogger = new AnyLogicLogger(this, logbackLogger);
+            anyLogicLoggersMap.put(logbackLogger, anyLogicLogger);
+        }
+        logger.info("AnyLogic Logger set up for class "
+                + owner.getSimpleName() + ", run ID "
+                + getModelInitialiser().getRunID());
+        
+        return anyLogicLogger;
+
+    }
+    
+    /*
+     * Register an accessor (for clean-up at run-end) and return the appropriate
+     * AnyLogicLogger.
+     */
+    AnyLogicLogger registerLoggerAccessor(AnyLogicLoggerAccessor accessor) {
+
+        assert accessor != null;
+        loggerAccessorList.add(accessor);       // So can clean up at run-end
+        return getPerRunAnyLogicLogger(accessor.getOwner());
 
     }
 

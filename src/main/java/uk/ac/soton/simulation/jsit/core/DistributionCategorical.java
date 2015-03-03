@@ -125,10 +125,10 @@ public abstract class DistributionCategorical<C extends Enum<C>>
                     + ") entries before sampling an integer");
         }
 
-        Sampler.SampleMode mode = getAccessor().getSampleMode();
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
         int rangeIdx = sampleOrdinalByMode();        // One-based
         if (logger.isTraceEnabled()) {
-            logger.trace(getAccessor().getFullID() + " (Mode " + mode + "): mapping raw ordinal " + rangeIdx
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode + "): mapping raw ordinal " + rangeIdx
                     + " to ranges (K=" + getK() + ")");
         }
         Integer sample = null;
@@ -158,7 +158,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     public C sampleCategory() {
 
-        AbstractStochasticAccessor<?> accessor = getAccessor();
+        AbstractStochasticAccessInfo accessor = getAccessInfo();
         if (accessor == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");
         }

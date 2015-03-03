@@ -121,11 +121,12 @@ class MultiDimEnumMap<V> {
         }
 
         for (int i = 0; i < dimEnumClasses.length; i++) {
-            if (dimEnumClasses[i].getEnumConstants() == null) { 
+            Object[] enumVals = dimEnumClasses[i].getEnumConstants();
+            if (enumVals == null) { 
                 throw new IllegalArgumentException("Dimension category " + (i+1) + " is not an enum");
             }
             else {
-                if (dimEnumClasses[i].getEnumConstants().length == 0) {
+                if (enumVals.length == 0) {
                     throw new IllegalArgumentException("Dimension category " + (i+1) + " has no values");
                 }
             }            
@@ -148,7 +149,7 @@ class MultiDimEnumMap<V> {
      * Add a value to a location in the map defined by a set of enum instances (given in the
      * same order as used to define the multi-dim map)
      */
-    public void addValue(V value, Object... locationEnumIdx) {
+    public void addValue(V value, Enum... locationEnumIdx) {
 
         checkLocationEnumIdx(locationEnumIdx);
         walkOrAddLeafObj(multiDimEnumMap, locationEnumIdx, 0, value);
@@ -159,7 +160,7 @@ class MultiDimEnumMap<V> {
      * Get a value from a location in the map defined by a set of enum instances (given in the
      * same order as used to define the multi-dim map)
      */
-    public V getValue(Object... locationEnumIdx) {
+    public V getValue(Enum... locationEnumIdx) {
 
         checkLocationEnumIdx(locationEnumIdx);
         return walkOrGetLeafObj(multiDimEnumMap, locationEnumIdx, 0);
@@ -205,7 +206,8 @@ class MultiDimEnumMap<V> {
         for (Object currKey : currSubMap.keySet()) {
             Object currEntry = currSubMap.get(currKey);
             if (currEntry == null) {        // At a 'leaf node'; add new dim array
-                currSubMap.put(currKey, newDimMaster.clone());        // Shallow copy is fine for null array
+                currSubMap.put((Enum) currKey,
+                               newDimMaster.clone());     // Shallow copy is fine for null array
             }
             else {                            // Recurse through next dimension
                 assert currEntry instanceof EnumMap;
@@ -256,7 +258,7 @@ class MultiDimEnumMap<V> {
      * dimension we're currently on (e.g., if this is 1, we're on the second dimension of three)
      */
     private void walkOrAddLeafObj(EnumMap currSubMap,
-                                  Object[] newObjLocation,
+                                  Enum[] newObjLocation,
                                   int currLocationIdx,
                                   V leafObj) {
 
@@ -290,13 +292,13 @@ class MultiDimEnumMap<V> {
         Object[] enumVals = enumClass.getEnumConstants();
 
         for (Object o : enumVals) {
-            map.put(o, null);
+            map.put((Enum) o, null);
         }
         return map;
 
     }
 
-    private void checkLocationEnumIdx(Object... locationEnumIdx) {
+    private void checkLocationEnumIdx(Enum... locationEnumIdx) {
 
         if (locationEnumIdx.length == 0) {
             throw new IllegalArgumentException("No dimensions specified for lookup");

@@ -30,17 +30,15 @@ import java.io.Serializable;
  * @author Stuart Rossiter
  * @since 0.2
  */
-public abstract class AbstractStochasticAccessor<S extends StochasticItem> implements Serializable {
+public abstract class AbstractStochasticAccessInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    //private static final Logger logger = LoggerFactory.getLogger(
-    //                                          StochasticAccessor.class);
 
     private final String id;
     private final Class<?> owner;
     private Sampler.SampleMode mode = null;
     
-    public AbstractStochasticAccessor(Class<?> owner, String id) {
+    public AbstractStochasticAccessInfo(Class<?> owner, String id) {
         
         this.owner = owner;
         this.id = id;
@@ -58,6 +56,8 @@ public abstract class AbstractStochasticAccessor<S extends StochasticItem> imple
         return owner.getSimpleName();
         
     }
+    
+    public abstract void removeMe(AbstractStochasticItem stochItem);
 
     /*
      * Will only be called by the model initialiser when checking the stochastic overrides. Needs
@@ -80,7 +80,5 @@ public abstract class AbstractStochasticAccessor<S extends StochasticItem> imple
         return mode;
 
     }
-    
-    public abstract void removeMe(StochasticItem stochItem);
     
 }

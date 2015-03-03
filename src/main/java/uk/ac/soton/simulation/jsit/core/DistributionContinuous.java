@@ -55,7 +55,7 @@ public abstract class DistributionContinuous
      */
     public double sampleDouble() {
 
-        AbstractStochasticAccessor<?> accessor = getAccessor();
+        AbstractStochasticAccessInfo accessor = getAccessInfo();
         if (accessor == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");
         }

@@ -58,7 +58,7 @@ public abstract class DistributionDiscrete
      */
     public int sampleInt() {
 
-        AbstractStochasticAccessor<?> accessor = getAccessor();
+        AbstractStochasticAccessInfo accessor = getAccessInfo();
         if (accessor == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");
         }

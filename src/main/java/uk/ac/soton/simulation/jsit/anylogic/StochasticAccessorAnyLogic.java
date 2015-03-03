@@ -18,10 +18,10 @@
  */
 package uk.ac.soton.simulation.jsit.anylogic;
 
-import uk.ac.soton.simulation.jsit.core.AbstractStochasticAccessor;
-import uk.ac.soton.simulation.jsit.core.StochasticItem;
+import uk.ac.soton.simulation.jsit.core.AbstractStochasticAccessInfo;
+import uk.ac.soton.simulation.jsit.core.BasicStochasticAccessInfo;
+import uk.ac.soton.simulation.jsit.core.AbstractStochasticItem;
 import uk.ac.soton.simulation.jsit.core.Sampler;
-import uk.ac.soton.simulation.jsit.core.ModelInitialiser;
 import uk.ac.soton.simulation.jsit.core.ExceptionUtils;
 
 import java.io.Serializable;
@@ -35,30 +35,101 @@ import java.util.*;
  * @author Stuart Rossiter
  * @since 0.2
  */    
-public class StochasticAccessorAnyLogic<S extends StochasticItem>
-                extends AbstractStochasticAccessor<S>
+public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
+                extends AbstractStochasticAccessInfo
                 implements Serializable {
 
+    
+    // ************************* Static Fields *****************************************
+    
     private static final long serialVersionUID = 1L;
     //private static final Logger logger = LoggerFactory.getLogger(
     //                                      StochasticAccessorAnyLogic.class);
 
+    
+    // ************************* Static Methods ****************************************
+    
+    /**
+     * Register a stochastic item for use <i>without</i> an accessor for access.
+     * This should only be done when using the item with singleton model classes
+     * (where it does not have to be shared between instances), and holding it as
+     * an instance field (i.e., not statically).
+     * 
+     * @since 0.2
+     * 
+     * @param owner
+     *            The class owning (using) the stochastic item.
+     * @param mainModel
+     *            The closest enclosing MainModel_AnyLogic instance, which is
+     *            used as a 'marker' object for this run.
+     * @param id
+     *            A user-provided ID to define this stochastic item (used in
+     *            stochastic control configuration files together with the
+     *            owning class name).
+     * @param stochItem
+     *            The stochastic item to register.
+     */
+    public static void registerAccessorFreeStochItem(Class<?> owner,
+                                                     String id,
+                                                     MainModel_AnyLogic mainModel,
+                                                     AbstractStochasticItem stochItem) {
+        
+        BasicStochasticAccessInfo accessInfo = new BasicStochasticAccessInfo(owner, id);
+        stochItem.registerAccessInfo(accessInfo);
+        Sampler sampler = mainModel.getModelInitialiser().registerStochItem(stochItem);
+        stochItem.registerSampler(sampler);                // Complete registration of stoch item       
+        
+    }
+
+    
+    // ************************* Instance Fields ***************************************
+    
     // 'Optimise' for non-parallel experiments
     private final Hashtable<MainModel_AnyLogic, S> itemsPerRun
                             = new Hashtable<MainModel_AnyLogic, S>(1);        
-   
+
     
+    // ************************** Constructors *****************************************
+    
+    /**
+     * Create an 'empty' accessor, normally held statically to access the per-run
+     * stochastic item across all instances of the class (in a way that works around
+     * AnyLogic threading issues).
+     * 
+     * @since 0.2
+     * 
+     * @param owner
+     *            The class owning (using) the stochastic item.
+     * @param id
+     *            A user-provided ID to define this stochastic item (used in
+     *            stochastic control configuration files together with the
+     *            owning class name).
+     */
     public StochasticAccessorAnyLogic(Class<?> owner, String id) {
         
         super(owner, id);
         
     }
+
     
-    /*
-     * Thread-safe via use of MDC and Hashtable
+    // *********************** Public Instance Methods *********************************
+    
+    /**
+     * Thread-safe method to add a stochastic item for the current run. This
+     * should only ever be called once per run.
+     * 
+     * @since 0.2
+     * 
+     * @param mainModel
+     *            The closest enclosing MainModel_AnyLogic instance, which is
+     *            used as a 'marker' object for this run.
+     * @param stochItem
+     *            The stochastic item being added.
      */
     public void addForRun(MainModel_AnyLogic mainModel, S stochItem) {
         
+        // Thread-safe via use of MDC and Hashtable
+
         if (mainModel == null || stochItem == null) {
             throw new IllegalArgumentException(
               "Must add stochastic item with non-null main model and item");
@@ -70,18 +141,27 @@ public class StochasticAccessorAnyLogic<S extends StochasticItem>
                 + mainModel.getModelInitialiser().getRunID());
         }
         
-        stochItem.registerAccessor(this);    // Needed before registering with initialiser
-        Sampler sampler = ModelInitialiser.getInitialiserForRunViaMDC().registerStochItem(stochItem);
+        stochItem.registerAccessInfo(this);    // Needed before registering with initialiser
+        Sampler sampler = mainModel.getModelInitialiser().registerStochItem(stochItem);
         stochItem.registerSampler(sampler);    // Complete registration of stoch item
         itemsPerRun.put(mainModel, stochItem);
         
     }
 
-    /*
-     * Thread-safe via use of MDC and Hashtable
+    /**
+     * Thread-safe method to get the stochastic item for the current run.
+     * 
+     * @since 0.2
+     * 
+     * @param mainModel
+     *            The closest enclosing MainModel_AnyLogic instance, which is
+     *            used as a 'marker' object for this run.
+     * @return The stochastic item for the run.
      */
     public S getForRun(MainModel_AnyLogic mainModel) {
 
+        // Thread-safe via use of MDC and Hashtable
+        
         if (mainModel == null) {
             throw new IllegalArgumentException(
                     "Need non-null main model to get stochastic item");
@@ -98,12 +178,14 @@ public class StochasticAccessorAnyLogic<S extends StochasticItem>
     }
     
     /**
-     * Done at end of a run. Thread-safe via use of Hashtable. Can't use S
-     * as parameter type: causes problems since calling code doesn't always know the
-     * concrete subclass
+     * Exposed for technical reasons; not for JSIT user use.
      */
     @Override
-    public void removeMe(StochasticItem stochItem) {
+    public void removeMe(AbstractStochasticItem stochItem) {
+        
+        // Done at end of a run. Thread-safe via use of Hashtable. Can't use S
+        // as parameter type: causes problems since calling code doesn't always know the
+        // concrete subclass
 
         if (stochItem == null) {
             throw new IllegalArgumentException("Need non-null stoch item to remove");

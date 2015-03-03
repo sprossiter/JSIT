@@ -93,7 +93,7 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
     protected int sampleOrdinalByMode() {
 
         Integer sample = null;
-        Sampler.SampleMode mode = getAccessor().getSampleMode();
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
 
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleBernoulli(p);
