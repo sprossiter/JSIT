@@ -26,9 +26,8 @@ import org.slf4j.Marker;
  * logging in AnyLogic models, where model instances may change threads and
  * thus break the expectations of Logback as regards MDC key availability.
  * <p>
- * <b>AnyLogic models should always log via an instance of this class, not via
- * a standard Logback Logger instance.</b> They should get this model-specific
- * instance via the MainModel_AnyLogic getAnyLogicLogger method at ...
+ * <b>AnyLogic models should normally log via an instance of this class, not via
+ * a standard Logback Logger instance (see the User Guide).</b>
  * 
  * @author Stuart Rossiter
  * @since 0.2
@@ -64,14 +63,14 @@ public class AnyLogicLogger implements Logger {
      * explicitly call this for logging via AnyLogicLoggers, and it will
      * automatically be true if you have previously logged from an
      * AnyLogicLogger in this code block.
-     * 
+     * <p>
      * (Technically, it will work until the next point at which the execution
      * thread of the run could change; I think this amounts to the end of
      * whatever scheduling event the current code is running as part of. It is
      * easier and safer to assume it is required for any block of code (e.g.,
      * method body) where 'vanilla' logging may be used at a log level that has
      * been set as enabled.)
-     * 
+     * <p>
      * JSIT code itself uses 'vanilla' Logback Loggers, rather than
      * AnyLogicLogger-style ones (a) to minimise processing overhead; (b)
      * because only AnyLogic models are affected by the problem; (c) because
