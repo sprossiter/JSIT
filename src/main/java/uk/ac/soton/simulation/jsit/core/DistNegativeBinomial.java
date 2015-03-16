@@ -86,7 +86,7 @@ public class DistNegativeBinomial extends DistributionDiscrete implements Serial
     /**
      * Change (set) the n parameter of the distribution.
      * 
-     * @param p The new n parameter (number of successes).
+     * @param n The new n parameter (number of successes).
      */
     public void setN(int n) {
 

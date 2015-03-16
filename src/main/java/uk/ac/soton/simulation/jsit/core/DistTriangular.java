@@ -127,7 +127,7 @@ public class DistTriangular extends DistributionContinuous
     /**
      * Change (set) the max parameter of the distribution.
      * 
-     * @param min The new max parameter (maximum outcome).
+     * @param max The new max parameter (maximum outcome).
      */
     public void setMax(double max) {
 

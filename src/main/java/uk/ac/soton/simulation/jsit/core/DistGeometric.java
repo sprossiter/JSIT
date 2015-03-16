@@ -58,7 +58,7 @@ public class DistGeometric extends DistributionDiscrete implements Serializable 
     /**
      * Change (set) the p parameter of the distribution.
      * 
-     * @param lambda The new p parameter.
+     * @param p The new p parameter.
      */
     public void setP(double p) {
 
