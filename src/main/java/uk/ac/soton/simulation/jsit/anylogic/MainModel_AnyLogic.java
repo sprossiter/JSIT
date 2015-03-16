@@ -36,7 +36,8 @@ import uk.ac.soton.simulation.jsit.core.MainModel;
 import uk.ac.soton.simulation.jsit.core.ModelInitialiser;
 
 /**
- * Abstract superclass for all Agents representing a runnable AMD model.
+ * Abstract superclass for all Agents representing the 'root' Agent for a runnable JSIT
+ * AnyLogic model.
  * 
  * @author Stuart Rossiter
  * @since 0.1
@@ -46,7 +47,9 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     // ************************ Static Fields *****************************************
 
     /**
-     * Enumeration of precision alternatives for sim time-of-day values
+     * Enumeration of precision alternatives for sim time-of-day values.
+     * 
+     * @since 0.1
      */
     public static enum TimeOfDayPrecision {
         /** Minutes */
@@ -67,30 +70,27 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     
     /**
      * Get the (closest composing) MainModel_AnyLogic 'main' model
-     * instance for the Agent in question. Needed to be able to use
-     * this as a 'run token' for StochasticAccessorAnyLogic and for
-     * AnyLogic-supporting logging (though the latter normally uses the
-     * convenience methods getAgentLogger and getNonAgentLogger).
+     * instance for the Agent in question. Useful for JSIT users to get access
+     * to the MainModel_AnyLogic instance (and, from there, the model initialiser).
      * 
-     * If the Agent is already a MainModel_AnyLogic instance this should
-     * not be called; use the non-static getLogger instead.
+     * @since 0.2
      * 
      * @param agent
      * The Agent in question.
      * @return
-     * The closest composing MainModel_AnyLogic instance.
+     * The closest composing MainModel_AnyLogic instance (which could be itself).
      */
     public static MainModel_AnyLogic getMainFor(Agent agent) {
         
         Agent currAgent = agent;
-        do {            // Should not be calling if agent is already a main
+        while (!(currAgent instanceof MainModel_AnyLogic)) {
             currAgent = currAgent.getOwner();
             if (currAgent == null) {
                 throw new IllegalArgumentException("Given Agent of class "
                             + agent.getClass().getSimpleName()
                             + " has no containing MainModel_AnyLogic");
             } 
-        } while (!(currAgent instanceof MainModel_AnyLogic));
+        }
               
         return (MainModel_AnyLogic) currAgent;
         
@@ -149,23 +149,33 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     // ************************ Constructors *******************************************
 
     /**
-     * Constructor with required signature for an Agent (undocumented by AnyLogic!). We get
-     * the JSIT initialiser for this run and set up a guaranteed-to-run-first
-     * dynamic event to check if the MDC per-run keys need to change. (This is
-     * needed to allow for use of Run Until and Run For, because these do *not*
-     * trigger the run(), pause() or step() methods of the Experiment and do
-     * the non-init processing of the model in a separate (non-child) thread to that
-     * which it (and JSIT) was initialised in. This non-init processing only begins when
-     * the event schedule starts to be worked through, and so the logic has to be
-     * done within a guaranteed-to-be-scheduled-first event.)
+     * Constructor with required signature for an Agent (undocumented by AnyLogic). Not
+     * intended for user usage.
+     * 
+     * @since 0.1
+     * 
+     * @param engine As required by AnyLogic.
+     * @param owner As required by AnyLogic.
+     * @param collection As required by AnyLogic.
      */
     public MainModel_AnyLogic(Engine engine,
             Agent owner,
             AgentList<? extends MainModel_AnyLogic> collection) {
+        
+        /*
+         * We get the JSIT initialiser for this run (which creates it if we're
+         * the initialising MainModel instance) and set up a
+         * guaranteed-to-run-first dynamic event to check if the MDC per-run
+         * keys need to change. (This is needed to allow for use of Run Until
+         * and Run For, because these do *not* trigger the run(), pause() or
+         * step() methods of the Experiment and do the non-init processing of
+         * the model in a separate (non-child) thread to that which it (and
+         * JSIT) was initialised in. This non-init processing only begins when
+         * the event schedule starts to be worked through, and so the logic has
+         * to be done within a guaranteed-to-be-scheduled-first event.)
+         */
 
         super(engine, owner, collection);
-
-        // Get or create (if I'm the initialising instance) the JSIT model initialiser
 
         jsitInitialiser = ModelInitialiser_AnyLogic.getInitialiserForRun(
                 getEngine().getExperiment(),
@@ -182,7 +192,9 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
 
     /**
      * Simple constructor as now included in all AnyLogic 7 generated Agent code. This
-     * seems never to be invoked, so we assert that we don't think it should.
+     * is never actually invoked.
+     * 
+     * @since 0.1
      */
     public MainModel_AnyLogic() {
 
@@ -199,6 +211,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * AnyLogic hook point (prior to startup logic). Generic point at which to save
      * model settings and finalise stochasticity controls since this is after parameters have
      * been given their values, but before normal user-facing startup logic.
+     * 
+     * @since 0.1
      */
     @Override
     public void onCreate() {
@@ -225,6 +239,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
 
     /**
      * AnyLogic hook point at model destruction. Clears up the model initialiser.
+     * 
+     * @since 0.1
      */
     @Override
     public void onDestroy() {
@@ -259,6 +275,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default inputs base path; user should override in their subclass to change this.
      * AnyLogic sets the working directory as the directory of the .alp file that the
      * Experiment is in.
+     * 
+     * @since 0.1
      */
     @Override
     public String getInputsBasePath() {
@@ -271,6 +289,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default outputs base path; user should override in their subclass to change this.
      * AnyLogic sets the working directory as the directory of the .alp file that the
      * Experiment is in.
+     * 
+     * @since 0.1
      */
     @Override
     public String getOutputsBasePath() {
@@ -283,7 +303,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default diagnostic log sim time formatting (as raw time to 0 d.p. + day + HH:MM).
      * The modeller should override this method (using the helper methods to compose
      * constituent parts) for their own formatting. This default implementation is as below:
-     * 
+     * <p>
+     * <pre>
      * if (modelIsInitialising()) {
      *     return "MODEL INIT";
      * }
@@ -291,6 +312,9 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      *     return getSimRawTime(0) + " " + getSimDay() + " "
      *              + getSimTimeOfDay(TimeOfDayPrecision.MINS);
      * }
+     * </pre>
+     * 
+     * @since 0.1
      */
     @Override
     public String getDiagnosticLogFormattedSimTime() {
@@ -309,13 +333,17 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default events log sim time formatting (as day + HH:MM).
      * The modeller should override this method (using the helper methods to compose
      * constituent parts) for their own formatting. This default implementation is as below:
-     * 
+     * <p>
+     * <pre>
      * if (modelIsInitialising()) {
      *     return "MODEL INIT";
      * }
      * else {
      *     return getSimDay() + " " + getSimTimeOfDay(TimeOfDayPrecision.MINS);
      * }
+     * </pre>
+     * 
+     * @since 0.1
      */
     @Override
     public String getEventsLogFormattedSimTime() {
@@ -334,6 +362,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * your user-written subclass to perform any environment setup that you want
      * to be performed at this very early JSIT-initialisation stage (after all JSIT
      * initialisation is complete).
+     * 
+     * @since 0.1
      */
     @Override
     public void runSpecificEnvironmentSetup() {
@@ -349,6 +379,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * they are using stochastic control and need to do static registration. However,
      * this is a common need and it is easy for modellers to forget to include this
      * function, so we force it to be needed by making it abstract.)
+     * 
+     * @since 0.1
      */
     @Override
     public abstract void doAllStaticStochRegistration();
@@ -356,12 +388,16 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     // Other Public Instance Methods
     
     /**
-     * Any static-level AnyLogic logger setup needs specifying in the user subclass. 
+     * Any static-level AnyLogic logger setup needs specifying in the user subclass.
+     * 
+     * @since 0.2
      */
     public abstract void doAllStaticPerRunLoggerSetup();
     
     /**
      * Determine if model is initialising or not.
+     * 
+     * @since 0.1
      * 
      * @return True if model is running.
      */
@@ -374,6 +410,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     /**
      * Method so that model objects can get the singleton model initialiser (especially
      * so as to obtain the run ID).
+     * 
+     * @since 0.1
      * 
      * @return The existing ModelInitialiser.
      */   
@@ -388,6 +426,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * of decimal places (so that it always represents the 'time slot' of the logged
      * event; e.g., something at sim time 100.89 is operating in '0 decimal places
      * time slot' 100.
+     * 
+     * @since 0.1
      * 
      * @param rawTimeDecimalPlaces
      * The number of decimal places to round down to
@@ -412,6 +452,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default current sim day AnyLogic implementation, calculating using time()
      * and day(). User can override if they have a more efficient implementation
      * (e.g., they were already storing a current day integer via a daily event).
+     * 
+     * @since 0.1
      *     
      * @return The current simulation day (starting at day 1; should never be called
      * when model is initialising)
@@ -432,6 +474,8 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     /**
      * Get the simulation current time of day to a given precision. This should
      * not be called during model initialisation (use modelIsInitialising() to check.)
+     * 
+     * @since 0.1
      * 
      * @param precision
      * The enumeration value for the required precision

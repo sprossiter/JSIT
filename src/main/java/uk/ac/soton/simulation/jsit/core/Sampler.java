@@ -113,6 +113,26 @@ public abstract class Sampler implements Serializable {
      * scheme, this should return 1 (failure) or 2 (success)
      */
     protected abstract int sampleBernoulli(double p);
+    
+    /*
+     * Poisson dist (mean lambda)
+     */
+    protected abstract int samplePoisson(double lambda);
+    
+    /*
+     * Neg binomial dist (mean n(1 - p) / p)
+     */
+    protected abstract int sampleNegBin(int n, double p);
+    
+    /*
+     * Geometric dist (mean (1 - p) / p)
+     */
+    protected abstract int sampleGeometric(double p);
+    
+    /*
+     * Triangular dist (mean (a + b + c) / 3)
+     */
+    protected abstract double sampleTriangular(double min, double mode, double max);
 
 
     // ************************** Private Methods **************************************

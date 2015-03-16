@@ -25,12 +25,15 @@ import java.util.*;
 
 import org.slf4j.Logger;
 
+import com.anylogic.engine.Agent;
+
 /**
  * Logger accessor specifically for AnyLogic. This allows for 
  * the use of AnyLogicLogger Loggers (which work around AnyLogic
- * threading issues), where one is needed per class <b>and per
- * model instance</b> (unlike normal Loggers where one per class
- * is neeed).
+ * threading issues), where the logger is shared between instances of some class
+ * (e.g., an AnyLogic Agent) <i>that are for the same model run</i>. (When using
+ * parallel runs of multi-run experiments, you will have instances of model
+ * classes for <i>all</i> parallel runs 'mixed together' in a single JVM.)
  * 
  * @author Stuart Rossiter
  * @since 0.2
@@ -54,28 +57,38 @@ public class AnyLogicLoggerAccessor implements Serializable {
      * It is always safer to use a (static) AnyLogicLoggerAccessor instance
      * instead.
      * 
+     * @since 0.2
+     * 
      * @param owner
      *            The class which owns (is using) the logger.
-     * @param mainModel
-     *            The closest enclosing MainModel_AnyLogic instance, which is
-     *            used as a 'marker' object for this run.
+     *            
+     * @param agentInModel Any Agent instance that is part of the model. This
+     * method will actually search for the closest 'parent' MainModel_AnyLogic
+     * instance, so passing that (if available directly) will speed up the call.
+     * 
      * @return The appropriate AnyLogicLogger for this class (which wraps the
      *         appropriate Logback Logger and provides the same interface, plus
      *         the ensureExternalLoggingForBlock method.
      */
     public static AnyLogicLogger getAccessorFreeAnyLogicLogger(Class<?> owner,
-                                                               MainModel_AnyLogic mainModel) {
+                                                               Agent agentInModel) {
         
-        return mainModel.getPerRunAnyLogicLogger(owner);
+        return MainModel_AnyLogic.getMainFor(agentInModel).getPerRunAnyLogicLogger(owner);
         
     }
     
 
     // ************************* Instance Fields ***************************************
     
-    // 'Optimise' for non-parallel experiments
-    private final Hashtable<MainModel_AnyLogic, AnyLogicLogger> itemsPerRun
-                            = new Hashtable<MainModel_AnyLogic, AnyLogicLogger>(1);
+    // We store the logger per run (keyed by the run ID) in a thread-safe Hashtable.
+    // 'Optimise' for non-parallel experiments (where only 1 entry). Keying by run ID
+    // (accessible from the ModelInitialiser shared by every MainModel_AnyLogic instance),
+    // rather than MainModel_AnyLogic instance, because different model Agents can have
+    // different 'parent' instances of the latter (e.g., for an Agent that is part of the
+    // domain model vs. one used for visualisation) and we want to ensure that users can
+    // use getLoggerForRun passing *any* Agent in the model
+    private final Hashtable<String, AnyLogicLogger> itemsPerRun
+                            = new Hashtable<String, AnyLogicLogger>(1);
     
     private final Class<?> owner;
     
@@ -84,6 +97,9 @@ public class AnyLogicLoggerAccessor implements Serializable {
     
     /**
      * Create an 'empty' accessor.
+     * 
+     * @since 0.2
+     * 
      * @param owner The class which is owning (using) this accessor.
      */
     public AnyLogicLoggerAccessor(Class<?> owner) {
@@ -95,57 +111,39 @@ public class AnyLogicLoggerAccessor implements Serializable {
 
     // *********************** Public Instance Methods *********************************
     
+
+    
     /**
      * Thread-safe method to add a logger for the current run. This should only
      * ever be called once per run.
      * 
-     * @param mainModel The closest enclosing MainModel_AnyLogic instance which
-     * is used as a 'marker' object for this run.
+     * @since 0.2
+     * 
+     * @param agentInModel Any Agent instance that is part of the model. This
+     * method will actually search for the closest 'parent' MainModel_AnyLogic
+     * instance, so passing that (if available directly) will speed up the call.
      */
-    public void addLoggerForRun(MainModel_AnyLogic mainModel) {
+    public void addLoggerForRun(Agent agentInModel) {
         
-        // Thread-safe via use of MDC and Hashtable
-        
-        if (mainModel == null) {
-            throw new IllegalArgumentException(
-              "Must add AnyLogic logger with non-null main model");
-        }
-        if (itemsPerRun.containsKey(mainModel)) {
-            throw new IllegalArgumentException(
-                "Logger already added to " + owner.getName()
-                + " accessor for run ID "
-                + mainModel.getModelInitialiser().getRunID());
-        }
-        
-        itemsPerRun.put(mainModel, mainModel.registerLoggerAccessor(this));
+        addLoggerForRun(MainModel_AnyLogic.getMainFor(agentInModel));
         
     }
 
+    
     /**
      * Thread-safe method to retrieve the logger for the current run. This will
      * fail if one was not added.
      * 
-     * @param mainModel The closest enclosing MainModel_AnyLogic instance which
-     * is used as a 'marker' object for this run.
-     * @return The appropriate Logger instance.
+     * @since 0.2
+     * 
+     * @param agentInModel Any Agent instance that is part of the model. This
+     * method will actually search for the closest 'parent' MainModel_AnyLogic
+     * instance, so passing that (if available directly) will speed up the call.
      */
-    public Logger getLoggerForRun(MainModel_AnyLogic mainModel) {
-
-        // Thread-safe via use of MDC and Hashtable
+    public Logger getLoggerForRun(Agent agentInModel) {
         
-        if (mainModel == null) {
-            throw new IllegalArgumentException(
-                    "Need non-null main model to get per-run logger");
-        }
-        AnyLogicLogger anyLogicLogger = itemsPerRun.get(mainModel);
-        if (anyLogicLogger == null) {
-            ExceptionUtils.throwWithThreadData(new IllegalStateException(
-                    "Must add logger for run "
-                    + mainModel.getModelInitialiser().getRunID()
-                    + " before retrieving it"));
-        }
-        return anyLogicLogger;
-
+        return getLoggerForRun(MainModel_AnyLogic.getMainFor(agentInModel));
+        
     }
 
     
@@ -165,6 +163,53 @@ public class AnyLogicLoggerAccessor implements Serializable {
         assert mainModel != null;
         Logger removedLogger = itemsPerRun.remove(mainModel);
         assert removedLogger != null;
+
+    }
+    
+    
+    // ******************** Private Instance Methods **************************
+    
+    /*
+     * Add logger keyed by the runID
+     */
+    private void addLoggerForRun(MainModel_AnyLogic mainModel) {
+        
+        // Thread-safe via use of MDC and Hashtable
+        
+        if (mainModel == null) {
+            throw new IllegalArgumentException(
+              "Must add AnyLogic logger with non-null main model");
+        }
+        String runID = mainModel.getModelInitialiser().getRunID();
+        if (itemsPerRun.containsKey(runID)) {
+            throw new IllegalArgumentException(
+                "Logger already added to " + owner.getName()
+                + " accessor for run ID " + runID);
+        }
+        
+        itemsPerRun.put(runID, mainModel.registerLoggerAccessor(this));
+        
+    }
+    
+
+    /*
+     * Get run-ID-keyed logger instance
+     */
+    private Logger getLoggerForRun(MainModel_AnyLogic mainModel) {
+
+        // Thread-safe via use of MDC and Hashtable
+        
+        if (mainModel == null) {
+            throw new IllegalArgumentException(
+                    "Need non-null main model to get per-run logger");
+        }
+        String runID = mainModel.getModelInitialiser().getRunID();
+        AnyLogicLogger anyLogicLogger = itemsPerRun.get(runID);
+        if (anyLogicLogger == null) {
+            ExceptionUtils.throwWithThreadData(new IllegalStateException(
+                    "Must add logger for run " + runID + " before retrieving it"));
+        }
+        return anyLogicLogger;
 
     }
     

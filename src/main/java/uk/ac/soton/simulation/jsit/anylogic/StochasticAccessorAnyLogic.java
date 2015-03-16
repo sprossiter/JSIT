@@ -27,14 +27,22 @@ import uk.ac.soton.simulation.jsit.core.ExceptionUtils;
 import java.io.Serializable;
 import java.util.*;
 
+import com.anylogic.engine.Agent;
+
 /**
- * Stochastic item accessor specifically for AnyLogic. This allows for 
- * the vagaries of AnyLogic model threading, where a model run may
- * switch between multiple unrelated (parent-child or sibling) threads.
+ * This allows for the use of stochastic items that are shared between instances
+ * of some class (e.g., an AnyLogic Agent) <i>that are for the same model
+ * run</i>. (When using parallel runs of multi-run experiments, you will have
+ * instances of model classes for <i>all</i> parallel runs 'mixed together' in a
+ * single JVM.)
+ * <p>
+ * This is an AnyLogic-specific variant of the standard version which works
+ * round AnyLogic threading issues (and should always be used for AnyLogic
+ * models).
  * 
  * @author Stuart Rossiter
  * @since 0.2
- */    
+ */
 public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
                 extends AbstractStochasticAccessInfo
                 implements Serializable {
@@ -52,16 +60,18 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
     /**
      * Register a stochastic item for use <i>without</i> an accessor for access.
      * This should only be done when using the item with singleton model classes
-     * (where it does not have to be shared between instances), and holding it as
-     * an instance field (i.e., not statically).
+     * (where it does not have to be shared between instances), and holding it
+     * as an instance field (i.e., not statically).
      * 
      * @since 0.2
      * 
      * @param owner
      *            The class owning (using) the stochastic item.
-     * @param mainModel
-     *            The closest enclosing MainModel_AnyLogic instance, which is
-     *            used as a 'marker' object for this run.
+     * @param agentInModel
+     *            Any Agent instance that is part of the model. This method will
+     *            actually search for the closest 'parent' MainModel_AnyLogic
+     *            instance, so passing that (if available directly) will speed
+     *            up the call.
      * @param id
      *            A user-provided ID to define this stochastic item (used in
      *            stochastic control configuration files together with the
@@ -71,12 +81,13 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
      */
     public static void registerAccessorFreeStochItem(Class<?> owner,
                                                      String id,
-                                                     MainModel_AnyLogic mainModel,
+                                                     Agent agentInModel,
                                                      AbstractStochasticItem stochItem) {
         
         BasicStochasticAccessInfo accessInfo = new BasicStochasticAccessInfo(owner, id);
         stochItem.registerAccessInfo(accessInfo);
-        Sampler sampler = mainModel.getModelInitialiser().registerStochItem(stochItem);
+        Sampler sampler = MainModel_AnyLogic.getMainFor(agentInModel)
+                                    .getModelInitialiser().registerStochItem(stochItem);
         stochItem.registerSampler(sampler);                // Complete registration of stoch item       
         
     }
@@ -84,9 +95,14 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
     
     // ************************* Instance Fields ***************************************
     
-    // 'Optimise' for non-parallel experiments
-    private final Hashtable<MainModel_AnyLogic, S> itemsPerRun
-                            = new Hashtable<MainModel_AnyLogic, S>(1);        
+    // We store the stoch item per run (keyed by the run ID) in a thread-safe Hashtable.
+    // 'Optimise' for non-parallel experiments (where only 1 entry). Keying by run ID
+    // (accessible from the ModelInitialiser shared by every MainModel_AnyLogic instance),
+    // rather than MainModel_AnyLogic instance, because different model Agents can have
+    // different 'parent' instances of the latter (e.g., for an Agent that is part of the
+    // domain model vs. one used for visualisation) and we want to ensure that users can
+    // use getForRun passing *any* Agent in the model
+    private final Hashtable<String, S> itemsPerRun = new Hashtable<String, S>(1);        
 
     
     // ************************** Constructors *****************************************
@@ -120,31 +136,36 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
      * 
      * @since 0.2
      * 
-     * @param mainModel
-     *            The closest enclosing MainModel_AnyLogic instance, which is
-     *            used as a 'marker' object for this run.
+     * @param agentInModel
+     *            Any Agent instance that is part of the model. This method will
+     *            actually search for the closest 'parent' MainModel_AnyLogic
+     *            instance, so passing that (if available directly) will speed
+     *            up the call.
      * @param stochItem
      *            The stochastic item being added.
      */
-    public void addForRun(MainModel_AnyLogic mainModel, S stochItem) {
+    public void addForRun(Agent agentInModel, S stochItem) {
         
         // Thread-safe via use of MDC and Hashtable
-
-        if (mainModel == null || stochItem == null) {
+        
+        if (agentInModel == null || stochItem == null) {
             throw new IllegalArgumentException(
-              "Must add stochastic item with non-null main model and item");
+              "Must add stochastic item with non-null Agent and item");
         }
-        if (itemsPerRun.containsKey(mainModel)) {
+        
+        MainModel_AnyLogic mainModel = MainModel_AnyLogic.getMainFor(agentInModel);
+        String runID = mainModel.getModelInitialiser().getRunID();
+
+        if (itemsPerRun.containsKey(runID)) {
             throw new IllegalArgumentException(
                     "Stochastic item already added to " + getFullID()
-                + " accessor for run ID "
-                + mainModel.getModelInitialiser().getRunID());
+                + " accessor for run ID " + runID);
         }
         
         stochItem.registerAccessInfo(this);    // Needed before registering with initialiser
         Sampler sampler = mainModel.getModelInitialiser().registerStochItem(stochItem);
         stochItem.registerSampler(sampler);    // Complete registration of stoch item
-        itemsPerRun.put(mainModel, stochItem);
+        itemsPerRun.put(runID, stochItem);
         
     }
 
@@ -153,24 +174,28 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
      * 
      * @since 0.2
      * 
-     * @param mainModel
-     *            The closest enclosing MainModel_AnyLogic instance, which is
-     *            used as a 'marker' object for this run.
+     * @param agentInModel
+     *            Any Agent instance that is part of the model. This method will
+     *            actually search for the closest 'parent' MainModel_AnyLogic
+     *            instance, so passing that (if available directly) will speed
+     *            up the call.
      * @return The stochastic item for the run.
      */
-    public S getForRun(MainModel_AnyLogic mainModel) {
+    public S getForRun(Agent agentInModel) {
 
         // Thread-safe via use of MDC and Hashtable
         
-        if (mainModel == null) {
+        if (agentInModel == null) {
             throw new IllegalArgumentException(
-                    "Need non-null main model to get stochastic item");
+                    "Need non-null Agent to get stochastic item");
         }
-        S stochItem = itemsPerRun.get(mainModel);
+        
+        MainModel_AnyLogic mainModel = MainModel_AnyLogic.getMainFor(agentInModel);
+        String runID = mainModel.getModelInitialiser().getRunID();
+        S stochItem = itemsPerRun.get(runID);
         if (stochItem == null) {
             ExceptionUtils.throwWithThreadData(new IllegalStateException(
-                    "Must add distribution for run "
-                    + mainModel.getModelInitialiser().getRunID()
+                    "Must add distribution for run " + runID
                     + " before retrieving it"));
         }
         return stochItem;
@@ -191,8 +216,8 @@ public class StochasticAccessorAnyLogic<S extends AbstractStochasticItem>
             throw new IllegalArgumentException("Need non-null stoch item to remove");
         }
         boolean foundVal = false;
-        Set<MainModel_AnyLogic> keys = itemsPerRun.keySet();
-        for (MainModel_AnyLogic m : keys) {
+        Set<String> keys = itemsPerRun.keySet();
+        for (String m : keys) {
             if (stochItem == itemsPerRun.get(m)) {
                 foundVal = true;
                 keys.remove(m);     // Safe via the key set

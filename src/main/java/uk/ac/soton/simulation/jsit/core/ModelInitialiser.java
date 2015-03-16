@@ -96,10 +96,22 @@ public abstract class ModelInitialiser {
     private static final Logger logger
                 = LoggerFactory.getLogger(ModelInitialiser.class);
 
+    /**
+     * Name for the model run settings file produced.
+     * @since 0.1
+     */
     public static final String SETTINGS_FILE = "settings.xml";
+    
+    /**
+     * Name for the input stochasticity control file.
+     * @since 0.1
+     */
     public static final String STOCH_CONTROL_FILE = "stochControl.properties";
 
-    // 'Domain events' (from event managers) go to this single uniquely-named logger
+    /**
+     * 'Domain events' (from event managers) go to this single uniquely-named logger.
+     * @since 0.1
+     */
     public static final String EVENT_LOGGER_NAME = "MODEL_DOMAIN_EVENTS";
 
     // The start time of the experiment, taken as the time this class was statically-initialised
@@ -129,9 +141,16 @@ public abstract class ModelInitialiser {
 
     // ************************* Static Methods ****************************************
 
-    // Debug messages for the thread we're in and the stored MDC value
-
-    public static void debugThreadInfo() {
+    /**
+     * Using the Logger provided, produce a debug message showing the current thread
+     * and the run ID stored via MDCs. Intended primarily for JSIT debugging.
+     * 
+     * @since 0.1
+     * 
+     * @param logger The Logger to use to log the message. (This must be set to log
+     * DEBUG level messages for the message actually be produced.)
+     */
+    public static void debugThreadInfo(Logger logger) {
 
         logger.debug("In thread " + Thread.currentThread().getName()
                 + " (" + Thread.currentThread().getId() + "), runID from MDC "
@@ -140,24 +159,11 @@ public abstract class ModelInitialiser {
     }
 
     /**
-     * Get the initialiser for the model run (thread) called from. Useful if Agents
-     * have asked the initialiser to store their stochasticity handlers for them
-     */
-    public static ModelInitialiser getInitialiserForRunViaMDC() {
-
-        String runID = MDC.get(ModelInitialiser.RUN_ID_KEY);
-        if (runID == null) {
-            throw new IllegalStateException("Model initialiser not yet set up");
-        }
-        return perRunInitialisers.get(runID);
-
-    }
-
-    /*
-     * 
-     * Returns null if this run has not previously been initialised (by an embedded or
-     * subclass Agent, which will have stored a main model class name which is different
-     * to the one currently trying to initialise the model)
+     * Exposed for technical reasons; not intended for JSIT user use.
+     * @since 0.1
+     * @param modelMain The MainModel instance that is checking for an existing initialiser.
+     * @return The existing ModelInitialiser (produced by another MainModel) or null if
+     * there is no existing one.
      */
     public static ModelInitialiser getExistingInitialiser(MainModel modelMain) {
 
@@ -173,6 +179,20 @@ public abstract class ModelInitialiser {
         }
 
         return initialiser;
+
+    }
+    
+    /*
+     * Get the initialiser for the model run (thread) called from. Keep non-public
+     * primarily to avoid confusion with use in AnyLogic models (where this won't work)
+     */
+    static ModelInitialiser getInitialiserForRunViaMDC() {
+
+        String runID = MDC.get(ModelInitialiser.RUN_ID_KEY);
+        if (runID == null) {
+            throw new IllegalStateException("Model initialiser not yet set up");
+        }
+        return perRunInitialisers.get(runID);
 
     }
 
@@ -260,9 +280,16 @@ public abstract class ModelInitialiser {
 
     // ************************ Constructors *******************************************
 
-    /*
-     * Private constructor called by the static factory method as required. Check
-     * input parameters and then initialise the environment
+    /**
+     * Constructor.
+     * 
+     * @since 0.1
+     * @param experimentName
+     *            A string defining the experiment (set of related runs) this
+     *            model instance is part of. (Used to derive the JSIT run ID.)
+     * @param modelMain
+     *            The MainModel instance that is the 'root' object for the
+     *            model.
      */
     public ModelInitialiser(String experimentName,
                             MainModel modelMain) {
@@ -307,9 +334,13 @@ public abstract class ModelInitialiser {
     
     // ************************* Public Instance Methods *******************************
     
-    /*
-     * Used both internally and externally by experiments to reset the MDC keys (the latter
-     * for when AnyLogic switches threads for a single run)
+    /**
+     * Primarily used internally (and exposed for technical reasons) to restore MDC
+     * key values used to associate an active thread with a model run (needed for AnyLogic
+     * models due to threading issues).
+     * <p>
+     * JSIT users may want to call this themselves if there are instances where their
+     * model can switch threads for a run (to one that is not a child of the previous one).
      */
     public void possibleMDC_KeysLoss() {
 
@@ -328,9 +359,12 @@ public abstract class ModelInitialiser {
 
     }
 
-    /*
-     * Determine whether a main model is the model initialiser or not. Only called
-     * after instantiation so can (now) use existence in static list to determine
+    /**
+     * Determine whether a main model is the model initialiser or not (since a model
+     * may have multiple MainModel instances and only one initiates the JSIT environment,
+     * typically the first instantiated).
+     * <p>
+     * This is primarily used internally (and exposed for technical reasons). 
      */
     public boolean isModelInitiator(MainModel modelMain) {
         
@@ -339,8 +373,8 @@ public abstract class ModelInitialiser {
         
     }
       
-    /*
-     * Get elapsed model time
+    /**
+     * Get elapsed model processing time in seconds.
      */
     public String getElapsedTimeSecs() {
 
@@ -351,8 +385,8 @@ public abstract class ModelInitialiser {
 
     }
 
-    /*
-     * Get calculated run ID. May be useful to pass to embedded Agents
+    /**
+     * Get the JSIT-derived run ID (as used in output folder names).
      */
     public String getRunID() {
 
@@ -360,8 +394,9 @@ public abstract class ModelInitialiser {
 
     }
 
-    /*
-     * Get the base path for this run's output files
+    /**
+     * Get the base path for this run's output files. User subclasses (when not using a helper
+     * library) may want to override this.
      */
     public String getOutputFilesBasePath() {
 
@@ -369,9 +404,13 @@ public abstract class ModelInitialiser {
 
     }
 
-    /*
-     * Save model settings to a file in the output folder. Called as part of initialisation
-     * by MainModel subclasses (at a point when the parameters are available) 
+    /**
+     * Save model settings to a file in the output folder. This sets up the XStream
+     * object and calls writeModelSettings (implemented by the subclass) to do the
+     * actual writing.
+     * <p>
+     * JSIT users will only need to call this manually if not using a helper library.
+     * 
      */
     public void saveModelSettings() throws IOException {
 
@@ -394,6 +433,10 @@ public abstract class ModelInitialiser {
         DistUniform.setupForInfoSerialisation(xstream);
         DistUniformDiscrete.setupForInfoSerialisation(xstream);
         DistLookupByEnums.setupForInfoSerialisation(xstream);
+        DistGeometric.setupForInfoSerialisation(xstream);
+        DistNegativeBinomial.setupForInfoSerialisation(xstream);
+        DistPoisson.setupForInfoSerialisation(xstream);
+        DistTriangular.setupForInfoSerialisation(xstream);
         setupForInfoSerialisation(xstream);      // Allow subclass to setup as well      
         
         String settingsFilePath = getOutputFilesBasePath() + "/" + SETTINGS_FILE;
@@ -417,15 +460,17 @@ public abstract class ModelInitialiser {
     }
     
     
-    /*
-     * User can call when sure that no further stochastic items will be registered to clean up /
-     * save JSIT resources
+    /**
+     * Call this when sure that no further stochastic items will be registered, which then
+     * allows the per-run settings file to be produced.
+     * <p>
+     * This will be called as part of the main model destroy processing (onMainModelDestroy
+     * method) if the user does not call it earlier.
      */
     public void finaliseStochRegistrations() {
         
-        if (settingsWriter == null) {
-            logger.warn("Stochastic registration finalisation prior to model startup completion ignored");
-            return;     // Assume called at inappropriate time by user (will still get done at model end)
+        if (settingsWriter == null) {   // Either already done or called too early in model init
+            return;     // Will still get done at model end if not done previously
         }
         
         // Write XML for registered stochastic items to settings file
@@ -485,8 +530,8 @@ public abstract class ModelInitialiser {
         
     }
     
-    /*
-     * Call when the MainModel is destroyed to clean up (static) storage for the run
+    /**
+     * Call this when the MainModel is destroyed to clean up statically-held storage for the run.
      */
     public void onMainModelDestroy() {
     
@@ -517,16 +562,16 @@ public abstract class ModelInitialiser {
         
     }
 
-    
-    // ******************** Protected/Package-Access Instance Methods ******************
- 
     /**
-     * Method exposed for technical reasons. Will hopefully be removed/made non-public
-     * in future releases.
+     * Method exposed for technical reasons; not intended for JSIT user use.
      * 
      * Register a dist or lookup, which involves setting its sample mode and checking for
      * double registrations. Returns the sampler so that the caller (a stoch accessor)
      * can register itself and the sampler in the stoch item.
+     * 
+     * @since 0.2
+     * @param stochItem The stochastic item to register.
+     * @return The relevant Sampler for that stochastic item to use.
      */
     public Sampler registerStochItem(AbstractStochasticItem stochItem) {
 
@@ -576,13 +621,15 @@ public abstract class ModelInitialiser {
 
     }
 
+    
+    // ******************** Protected/Package-Access Instance Methods ******************
       
     protected abstract void writeModelSettings(XStream xstream, BufferedWriter writer) throws IOException;
     protected abstract void setupForInfoSerialisation(XStream xstream);
     protected abstract Sampler createFrameworkSpecificSampler();
         
       
-      // *************************** Private Instance Methods ****************************
+    // *************************** Private Instance Methods ****************************
     
     private void setMDC_Keys() {
 
@@ -611,7 +658,7 @@ public abstract class ModelInitialiser {
             logger.info("******** Per-Run Model Setup ***********");
 
             if (logger.isDebugEnabled()) {
-                debugThreadInfo();
+                debugThreadInfo(logger);
             }
             logger.info("Run ID {} calculated by {} and used as outputs folder name",
                     runID, modelInitiator);

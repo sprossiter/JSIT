@@ -33,19 +33,31 @@ import uk.ac.soton.simulation.jsit.core.Sampler;
  */    
 public class Sampler_AnyLogic extends Sampler implements Serializable {
 
+
+    // ************************* Static Fields *****************************************
+    
     private static final long serialVersionUID = 1L;
 
+
+    // ************************* Instance Fields ***************************************
+    
     private final Utilities alSampler;
 
+    
+    // ************************** Constructors *****************************************
+    
     /*
-     * Default constructor
+     * Default constructor. 
      */
-    public Sampler_AnyLogic(Utilities alSampler) {
+    Sampler_AnyLogic(Utilities alSampler) {
 
         this.alSampler = alSampler;
 
     }
 
+    
+    // **************** Protected/Package-Access Instance Methods **********************
+    
     @Override
     protected boolean distIsSupported(Distribution dist) {
 
@@ -108,6 +120,46 @@ public class Sampler_AnyLogic extends Sampler implements Serializable {
         assert (sample == 0 || sample == 1);
         return sample + 1;
 
+    }
+
+    /*
+     * Poisson sample
+     */
+    @Override
+    protected int samplePoisson(double lambda) {
+        
+        return alSampler.poisson(lambda);
+        
+    }
+
+    /*
+     * NegBin sample
+     */
+    @Override
+    protected int sampleNegBin(int n, double p) {
+        
+        return alSampler.negativeBinomial(n, p);
+        
+    }
+
+    /*
+     * Geometric sample
+     */
+    @Override
+    protected int sampleGeometric(double p) {
+        
+        return alSampler.geometric(p);
+        
+    }
+
+    /*
+     * Triangular sample; AL uses order min, max, mode!
+     */
+    @Override
+    protected double sampleTriangular(double min, double mode, double max) {
+        
+        return alSampler.triangular(min, max, mode);
+        
     }
 
 }

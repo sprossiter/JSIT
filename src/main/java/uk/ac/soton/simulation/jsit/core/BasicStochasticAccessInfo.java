@@ -12,6 +12,11 @@ public class BasicStochasticAccessInfo extends AbstractStochasticAccessInfo {
 
     /**
      * Exposed for technical reasons; not for JSIT user use.
+     * 
+     * @since 0.2
+     * 
+     * @param owner The owning class.
+     * @param id The stochastic item's ID.
      */
     public BasicStochasticAccessInfo(Class<?> owner, String id) {
         
@@ -22,6 +27,13 @@ public class BasicStochasticAccessInfo extends AbstractStochasticAccessInfo {
     
     // *********************** Public Instance Methods *********************************
     
+    /**
+     * Exposed for technical reasons; not for JSIT user use.
+     * 
+     * @since 0.2
+     * 
+     * @param stochItem The stochastic item to remove.
+     */
     @Override
     public void removeMe(AbstractStochasticItem stochItem) {
         

@@ -26,12 +26,14 @@ import java.io.Serializable;
 import java.util.*;
 
 /**
- * JSIT abstract representation of all categorical distributions. Includes
- * nested Range class to represent the categories.
+ * JSIT abstract representation of all categorical distributions. The categories
+ * can either be a Java enum and/or numbered outcomes 1-K which can be mapped to a
+ * sequence of integer ranges [a,b] (where there should be K entries across all
+ * the ranges). The nested Range class represents those ranges.
  * 
  * @author Stuart Rossiter
  * @since 0.1
- */    
+ */   
 public abstract class DistributionCategorical<C extends Enum<C>>
                 extends DistributionDiscrete implements Serializable {
 
@@ -42,9 +44,27 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Nested class representing an integer (inclusive) range [min, max].
+     * 
+     * @author Stuart Rossiter
+     * @since 0.1
+     */
     public static class Range {
+        /**
+         * The range minimum.
+         */
         public final int min;
+        /**
+         * The range maximum.
+         */
         public final int max;
+        
+        /**
+         * Create a range.
+         * @param min The minimum.
+         * @param max The maximum.
+         */
         public Range(int min, int max) {
             if (max < min) {
                 throw new IllegalArgumentException("Range max is less than min");
@@ -52,6 +72,12 @@ public abstract class DistributionCategorical<C extends Enum<C>>
             this.min = min;
             this.max = max;
         }
+        
+        /**
+         * Get the number of entries for the range.
+         * 
+         * @return The number of entries.
+         */
         public int numEntries() {
             return max - min + 1;
         }
@@ -75,7 +101,10 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     private int rangesEntries = 0;
     private LinkedList<Range> ranges = null;
-
+    
+    // Dist is 'locked' when the probs are being changed but the changes have not yet
+    // been completed
+    private boolean isLocked = false;
 
     // ************************ Constructors *******************************************
 
@@ -91,80 +120,124 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     }
 
-    protected DistributionCategorical(int k) {
+    protected DistributionCategorical(int k, boolean keepLocked) {
 
         super();        
         this.categoryEnumType = null;
         this.k = k;
+        if (keepLocked) {
+            lock();
+        }
 
     }
 
 
     // ************************* Public Methods *************************************
 
-    /*
-     * Force concrete subclasses to override toString()
+    /**
+     * Lock the distribution (which will cause an error on sampling) whilst changes
+     * are made to it (e.g., ranges are added to map to numeric outcomes).
+     * 
+     * @since 0.2
+     */
+    public void lock() {
+        
+        if (isLocked) {
+            throw new IllegalStateException("Distribution is already locked");
+        }
+        isLocked = true;
+        
+    }
+    
+    /**
+     * Unlock the distribution (allowing it to be sampled) after changes to it
+     * are completed. Any checks as to the consistency of the distribution will be
+     * (re)made at this point.
+     * 
+     * @since 0.2
+     */
+    public void unlock() {
+        
+        if (!isLocked) {
+            throw new IllegalStateException("Distribution must be locked to unlock it");
+        }
+        if (ranges != null && rangesEntries != getK()) {
+            throw new UnsupportedOperationException(
+                    "Need to set up ranges with K (" + getK() + ") entries before unlocking");
+        }
+        isLocked = false;
+        
+    }
+    
+    /**
+     * Determine if the distribution is locked.
+     * 
+     * @since 0.2
+     * 
+     * @return A boolean true/false value.
+     */
+    public boolean isLocked() {
+        
+        return isLocked;
+        
+    }
+    
+    /**
+     * Require concrete subclasses to implement toString.
+     * 
+     * @since 0.1
      */
     @Override
     public abstract String toString();
 
-    /*
-     * Sample a (discrete) integer. The 'raw' 1-K value is sampled
-     * and then the ranges used to map this to an output integer
+    /**
+     * Whether this distribution returns an enum category on sampling or not. (If not,
+     * it returns an integer.)
+     * 
+     * @since 0.1
+     * 
+     * @return A boolean true/false.
      */
-    @Override
-    protected int sampleIntByMode() {
-
-        if (rangesEntries == 0) {            // No ranges; sample 'raw' 1-K int
-            return sampleOrdinalByMode();
-        }
-
-        if (rangesEntries != getK()) {
-            throw new UnsupportedOperationException(
-                    "Need to set up ranges with K (" + getK()
-                    + ") entries before sampling an integer");
-        }
-
-        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
-        int rangeIdx = sampleOrdinalByMode();        // One-based
-        if (logger.isTraceEnabled()) {
-            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode + "): mapping raw ordinal " + rangeIdx
-                    + " to ranges (K=" + getK() + ")");
-        }
-        Integer sample = null;
-        for (Range r : ranges) {
-            if (rangeIdx <= r.numEntries()) {
-                sample = r.min + rangeIdx - 1;
-                break;
-            }
-            rangeIdx -= r.numEntries();
-        }
-        assert sample != null;
-        return sample;
-
-    }
-
-    public boolean returnsCategory() {
+    public boolean usesEnumCategory() {
 
         return categoryEnumType != null;
 
     }
+    
+    /**
+     * Whether this distribution uses mapped ranges or not. (If not,
+     * it returns a 1-K integer when sampling an integer.)
+     * 
+     * @since 0.2
+     * 
+     * @return A boolean true/false.
+     */
+    public boolean usesMappedRanges() {
 
-    public Class<C> getCategory() {
-
-        return categoryEnumType;
+        return ranges != null;
 
     }
 
+    /**
+     * Sample a Java enum category value from the distribution. Will error if the
+     * distribution is locked.
+     * 
+     * @since 0.1
+     * 
+     * @return The enum value sampled.
+     */
     public C sampleCategory() {
 
+        if (isLocked) {
+            throw new UnsupportedOperationException("Distribution is locked");
+        }
         AbstractStochasticAccessInfo accessor = getAccessInfo();
         if (accessor == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");
         }
         Sampler.SampleMode mode = accessor.getSampleMode();
         assert mode != null;
-        if (!returnsCategory()) {
+        if (!usesEnumCategory()) {
             throw new UnsupportedOperationException(
                     "This distribution not defined to return a category");
         }
@@ -179,12 +252,21 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     }
 
-    /*
-     * Add a range that the K outcomes will be mapped to. The
-     * distribution will only be integer-sampleable when ranges
-     * are added which together give a number of values equal to K.
-     * Returns current number of entries in all ranges. If there are
-     * no ranges added, the 'raw' 1-K integer is sampled
+    /**
+     * Add a range to be used as part of mapping sampled outcomes to an integer. Ranges
+     * are applied in the order added; e.g., adding [1,2] and [5,6] ranges means that
+     * the 4 possible outcomes map to 1,2,5 and 6 respectively.
+     * 
+     * The distribution should be locked prior to adding the first such range, and unlocked
+     * after the last is added (at which point it will be checked that the sequence of ranges
+     * includes K elements).
+     * 
+     * @since 0.1
+     * 
+     * @param min The range minimum.
+     * @param max The range maximum.
+     * @return The number of entries across all ranges added so far. (This should equal K
+     * when the last range is added.)
      */
     public int addRange(int min, int max) {
 
@@ -205,15 +287,12 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     }
 
-    public Range getSubRange(int rangeIdx) {
-
-        if (rangeIdx < 0 || ranges == null || rangeIdx >= ranges.size()) {
-            return null;
-        }
-        return ranges.get(rangeIdx);
-
-    }
-
+    /**
+     * Clear all ranges, which will revert any integer sampling to return a
+     * 'raw' 1-K value.
+     * 
+     * @since 0.1
+     */
     public void clearRanges() {
 
         if (ranges != null) {        // Nothing to do otherwise    
@@ -223,22 +302,13 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     }
 
-    public void clearRanges(int revisedK) {
-
-        if (revisedK <= 0) {
-            throw new IllegalArgumentException("Number of alternatives K must be positive");
-        }
-        if (revisedK != k && returnsCategory()) {
-            throw new UnsupportedOperationException("Can't change K when returning a category");
-        }
-        clearRanges();
-        this.k = revisedK;
-
-    }
-
-    /*
+    /**
      * Get the distribution's K value; i.e.,
      * the number of discrete alternatives (labellable 1-K)
+     * 
+     * @since 0.1
+     * 
+     * @return The K value.
      */
     public int getK() {
 
@@ -250,6 +320,41 @@ public abstract class DistributionCategorical<C extends Enum<C>>
     // ******************* Protected/Package-Access Methods *************************
 
     protected abstract int sampleOrdinalByMode();
+    
+    /*
+     * Sample a (discrete) integer. The 'raw' 1-K value is sampled
+     * and then the ranges used to map this to an output integer
+     */
+    @Override
+    protected int sampleIntByMode() {
+
+        if (isLocked) {
+            throw new UnsupportedOperationException("Distribution is locked");
+        }
+        if (rangesEntries == 0) {            // No ranges; sample 'raw' 1-K int
+            return sampleOrdinalByMode();
+        }
+        
+
+        Sampler.SampleMode mode = getAccessInfo().getSampleMode();
+        int rangeIdx = sampleOrdinalByMode();        // One-based
+        if (logger.isTraceEnabled()) {
+            logger.trace(getAccessInfo().getFullID() + " (Mode " + mode
+                    + "): mapping raw ordinal " + rangeIdx
+                    + " to ranges (K=" + getK() + ")");
+        }
+        Integer sample = null;
+        for (Range r : ranges) {
+            if (rangeIdx <= r.numEntries()) {
+                sample = r.min + rangeIdx - 1;
+                break;
+            }
+            rangeIdx -= r.numEntries();
+        }
+        assert sample != null;
+        return sample;
+
+    }
 
     protected void checkPMF(double[] pmfValues) {
 
@@ -268,6 +373,47 @@ public abstract class DistributionCategorical<C extends Enum<C>>
         if (cumulativeProb - 1.0d > DistributionDiscrete.CUMULATIVE_PROB_TOLERANCE) {
             throw new IllegalArgumentException("Sum of PMF probabilities is outside tolerance "
                     + CUMULATIVE_PROB_TOLERANCE + " from 1");
+        }
+
+    }
+    
+    /*
+     * Get the Java enum used as the category. Will return null if none has been set up.
+     */
+    protected Class<C> getCategory() {
+
+        return categoryEnumType;
+
+    }
+    
+    /*
+     * Get a particular sub-range.
+     */
+    protected Range getSubRange(int rangeIdx) {
+
+        if (rangeIdx < 0 || ranges == null || rangeIdx >= ranges.size()) {
+            return null;
+        }
+        return ranges.get(rangeIdx);
+
+    }
+    
+    /*
+     * Clear ranges and change the K value. Only works if an enum category has not been set
+     * (unless the revised K is actually the same as before).
+     */
+    protected void clearRanges(int revisedK, boolean keepLocked) {
+
+        if (revisedK <= 0) {
+            throw new IllegalArgumentException("Number of alternatives K must be positive");
+        }
+        if (revisedK != k && usesEnumCategory()) {
+            throw new UnsupportedOperationException("Can't change K when returning a category");
+        }
+        clearRanges();
+        this.k = revisedK;
+        if (keepLocked) {
+            lock();
         }
 
     }

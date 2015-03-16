@@ -54,10 +54,20 @@ public class DistCustomCategorical<C extends Enum<C>>
 
     // PMF (Probability Mass Function) as an array of (double) probabilities
     private final double[] pmf;
+    
+
 
 
     // ************************** Constructors ****************************************
 
+    /**
+     * Create an instance where outcomes map to an Java enum category.
+     * 
+     * @since 0.1
+     * 
+     * @param categoryEnumType The enum which defines your categories.
+     * @param pmf The probability mass function (PMF) as an array of probabilities.
+     */
     public DistCustomCategorical(Class<C> categoryEnumType, double[] pmf) {
 
         super(categoryEnumType);
@@ -65,17 +75,95 @@ public class DistCustomCategorical<C extends Enum<C>>
         this.pmf = pmf;
 
     }
+    
+    /**
+     * Create an instance where outcomes map to integers 1-K. You may wish to
+     * add ranges so that one of a particular set of integers is returned, in
+     * which case you should keep the distribution locked until all ranges
+     * have been added (and then unlock it).
+     * 
+     * @since 0.2
+     * 
+     * @param pmf The probability mass function (PMF) as an array of probabilities.
+     * @param keepLocked Whether to keep the distribution locked (see above).
+     */
+    public DistCustomCategorical(double[] pmf, boolean keepLocked) {
 
-
-    // ************************* Public Methods *************************************
-
-    public void setProbability(C categoryValue, double prob) {
-
-        pmf[categoryValue.ordinal()] = prob;
-        checkPMF(pmf);        // Recheck that probs sum to (near to) 1
+        super(pmf.length, keepLocked);
+        checkPMF(pmf);            // Superclass-provided check method       
+        this.pmf = pmf;
 
     }
 
+
+    // ************************* Public Methods *************************************
+    
+    /**
+     * Unlock the distribution (allowing it to be sampled) after changes to probabilities
+     * are completed. The probabilities will need to sum to 1 at this point.
+     * 
+     * @since 0.2
+     */
+    @Override
+    public void unlock() {
+        
+        checkPMF(pmf);
+        super.unlock();
+        
+    }
+    
+    /**
+     * Set (change) a probability value linked to a categorical outcome.
+     * The distribution will be locked automatically when you change the first
+     * probability; you should unlock it after the last change is done.
+     * 
+     * @since 0.1
+     * 
+     * @param categoryValue The enum value (category) being changed.
+     * @param prob The new probability.
+     */
+    public void setProbability(C categoryValue, double prob) {
+
+        pmf[categoryValue.ordinal()] = prob;
+        if (!isLocked()) {      // Lock on the first prob change
+            lock();
+        }
+
+    }
+    
+    /**
+     * Set (change) a probability value linked to a numeric (integer) outcome.
+     * The distribution will be locked automatically when you change the first
+     * probability; you should unlock it after the last change is done.
+     * 
+     * @since 0.2
+     * 
+     * @param outcomeNum
+     *            The number ('position') of the outcome to change (1-K).
+     * @param prob
+     *            The new probability.
+     */
+    public void setProbability(int outcomeNum, double prob) {
+        
+        if (outcomeNum < 1 || outcomeNum > pmf.length) {
+            throw new IllegalArgumentException("Outcome number " + outcomeNum
+                    + " is outside the expected range [1," + getK() + "]");
+        }
+        pmf[outcomeNum - 1] = prob;
+        if (!isLocked()) {      // Lock on the first prob change
+            lock();
+        }
+        
+    }
+
+    /**
+     * Custom toString implementation.
+     * 
+     * @since 0.1
+     * 
+     * @return A string representation of the distribution;
+     * e.g., <code>"CustomPMF[0.1,0.2,0.7]"</code>.
+     */
     @Override
     public String toString() {
 

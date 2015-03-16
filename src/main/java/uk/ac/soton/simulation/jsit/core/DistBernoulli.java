@@ -57,28 +57,55 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
 
     // ************************** Constructors ****************************************
 
+    /**
+     * Create a Bernoulli distribution instance.
+     * 
+     * @since 0.1
+     * 
+     * @param p The p value (success probability) for the trial.
+     */
     public DistBernoulli(double p) {
 
         super(Sampler.Binary.class);
         this.p = p;
+        checkP();
 
     }
 
 
     // ************************* Public Methods *************************************
 
+    /**
+     * Change (set) the p value of the distribution.
+     * 
+     * @param p The new p value (probability of success).
+     */
     public void setP(double p) {
 
         this.p = p;
+        checkP();
 
     }
 
+    /**
+     * Get the distribution's p value (probability of success).
+     * 
+     * @return The p value.
+     */
     public double getP() {
 
         return p;
 
     }
 
+    /**
+     * Custom toString implementation.
+     * 
+     * @since 0.1
+     * 
+     * @return A string representation of the distribution;
+     * e.g., <code>"Bernoulli(0.8)"</code>.
+     */
     @Override
     public String toString() {
 
@@ -107,4 +134,15 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
     }
 
 
+    // ***************************** Private Methods ********************************
+
+    private void checkP() {
+        
+        if (p < 0.0d || p > 1.0d) {
+            throw new IllegalArgumentException(
+                            "Binomial p value " + p + " is not in [0,1]");
+        }
+        
+    }
+    
 }

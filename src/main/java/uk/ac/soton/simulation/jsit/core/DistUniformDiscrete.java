@@ -52,37 +52,71 @@ public class DistUniformDiscrete<C extends Enum<C>>
 
     // ************************** Constructors ****************************************
 
+    /**
+     * Create an instance where sampling returns a Java enum category.
+     * 
+     * @since 0.1
+     * 
+     * @param categoryEnumType The type (Class instance) of the category enum.
+     */
     public DistUniformDiscrete(Class<C> categoryEnumType) {
 
         super(categoryEnumType);
 
     }
 
+    /**
+     * Create an instance returning an integer value from a single range.
+     * 
+     * @since 0.1
+     * 
+     * @param min The range minimum.
+     * @param max The range maximum.
+     */
     public DistUniformDiscrete(int min, int max) {
 
-        super(max - min + 1);
-        setRange(min, max);      
+        super(max - min + 1, true);     // Keep locked for correctness-sake
+        setRange(min, max);
+        unlock();
 
     }
 
 
     // ************************* Public Methods *************************************
 
+    /**
+     * Change or add a range for the distribution. Will error if it
+     * is also set to return an enum category with a different number of categories.
+     * 
+     * @since 0.1
+     * 
+     * @param min The revised range minimum.
+     * @param max The revised range maximum.
+     */
     public void setRange(int min, int max) {
 
-        clearRanges(max - min + 1);
+        clearRanges(max - min + 1, true);  // Lock after clear for correctness-sake
         if (min != 1) {                // No range needed if min == 1; returns 'raw' 1-max         
             addRange(min, max);            // Add range to superclass
         }
+        unlock();
 
     }
 
+    /**
+     * Custom toString implementation.
+     * 
+     * @since 0.1
+     * 
+     * @return A string representation of the distribution;
+     * e.g., <code>"DiscreteUniform(1,10)"</code>.
+     */
     @Override
     public String toString() {
 
         String stringRep;
 
-        if (returnsCategory()) {
+        if (usesEnumCategory()) {
             stringRep = "DiscreteUniform(" + getCategory().getSimpleName() + ")";
         }
         else {
