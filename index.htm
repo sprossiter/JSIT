@@ -35,7 +35,7 @@
 <h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
 <p class="subHeading"><b>JSIT Version: </b>0.2
 <br />
-<b>Last Updated: </b>3rd March 2015</p>
+<b>Last Updated: </b>12th March 2015</p>
 
 <h2>Contents</h2>
 
@@ -292,14 +292,6 @@ reflect these events. (As a general design principle, model components should
 
 <h2 id="usageOverview">Usage Overview</h2>
 
-<p>The UML class diagram in <b>Figure 1</b> summarises the core JSIT classes and
-how they 'fit' into a user-written model:</p>
-
-<img src="diagrams/jsitUsageClassSimple.png"></img>
-
-<p><b>Figure 1</b>: <em>Overview of JSIT class structure within a user
-model.</em></p>
-
 <div class="sideNote">Models may have multiple 'runnable top-level classes' to
 cater for different visualisation (GUI) alternatives, especially for frameworks
 such as MASON which make a very clean separation between model and
@@ -311,9 +303,18 @@ that, for AnyLogic models, it is best to make all these top-level classes model
 roots, coded in such a way that only the first-initialised one actually sets up
 the infrastructure.</div>
 
+<p>The UML class diagram in <b>Figure 1</b> summarises the core JSIT classes and
+how they fit into a user-written model:</p>
+
+<img src="diagrams/jsitUsageClassSimple.png"></img>
+
+<p><b>Figure 1</b>: <em>Overview of JSIT class structure within a user
+model.</em></p>
+
 <p>The user's model consists of a 'root' class and some set of model components
-(here indicated by <code>&lt;ModelRoot&gt;</code> and
-<code>&lt;ModelComponent&gt;</code>). The root class needs to implement the JSIT
+which it composes (here indicated by <code>&lt;ModelRoot&gt;</code> for the
+root, and <code>&lt;ModelComponent&gt;</code> for some given component, which
+could also be the root). The root class needs to implement the JSIT
 <code>MainModel</code> interface (possibly via a superclass or other helper
 class) and set up some concrete subclass of <code>ModelInitialiser</code> which
 initialises the JSIT framework (in particular the logging, which we want to be
@@ -330,30 +331,30 @@ code.</p>
 
 <p><em>Helper libraries do virtually all the work above for you for a given
 simulation framework</em>. With all this set up, the model's user code can then
-use the JSIT features as it needs to via
+use the JSIT features as it needs to:
 
 <ul>
 
-<li><a href="http://www.slf4j.org/">SLF4J</a> <code>Logger</code> instances for
+<li>Use <a href="http://www.slf4j.org/">SLF4J</a> <code>Logger</code> instances for
 logging (using <a href="http://logback.qos.ch/">Logback</a> as the underlying
 implementation) and a Logback configuration file to control the logging per
-run;</li>
+run.</li>
 
-<li>code in the concrete <code>ModelInitialiser</code> to automatically store
+<li>Code in the concrete <code>ModelInitialiser</code> will automatically store
 settings for each run (including all model parameters and information on the
 environment, where this includes provenance for the model code via its location
-in a version control system);</li>
+in a version control system).</li>
 
 <div class="sideNote">As in the diagram, stochastic items are normally accessed
-via a <code>StochasticAccessorMDC</code>, which is explained later.</div>
+via a <code>StandardStochasticAccessor</code>, which is explained later.</div>
 
-<li>JSIT <code>StochasticItem</code> subclasses for probability distributions
-(and related components such as distribution-lookups via Java enum 'keys'), and
-per-run configuration files to control this stochasticity;</li>
+<li>JSIT <code>AbstractStochasticItem</code> subclasses are used for probability
+distributions (and related components such as distribution-lookups via Java enum
+'keys'), and per-run configuration files to control this stochasticity.</li>
 
-<li>the JSIT <code>EventManager</code> to publish and subscribe to events (using
-<code>EventSource</code> and <code>EventReceiver</code> interfaces which
-are not shown in the diagram).
+<li>The JSIT <code>EventManager</code> is used to publish and subscribe to
+events (using <code>EventSource</code> and <code>EventReceiver</code> interfaces
+which are not shown in the diagram).
 
 </ul></p>
 
@@ -365,6 +366,37 @@ trail of model versions.</p>
 href="http://docs.oracle.com/javase/tutorial/java/generics/">Java Generics</a>
 functionality (which means that Java 5+ is required) so that there is useful
 compile-time type-checking for things like probablity distributions.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="anyLogicUsage">AnyLogic Specifics</h3>
+
+<p>Figure 2 below shows the equivalent of figure 1 for an AnyLogic model, and is
+explained in more detail later. Note for now that
+
+<ul>
+
+<li>There are now concrete AnyLogic helper library implementations.</li>
+
+<li>The model root class integrates with JSIT via a superclass
+<code>MainModel_AnyLogic</code> (which implements the <code>MainModel</code>
+interface).</li>
+
+<li>There are AnyLogic specific alternatives for the use of logging, and the
+access to stochastic items. (These are because of threading issues specific to
+AnyLogic.)</li>
+
+<li>There is an extra AnyLogic-specific stochastic items helper class
+(<code>HyperArrayLookup</code>) which leverages an AnyLogic component.</li>
+
+</ul>
+
+<img src="diagrams/jsitUsageClassSimpleAnyLogic.png"></img>
+
+<p><b>Figure 2</b>: <em>Overview of JSIT class structure within an AnyLogic user
+model (using the JSIT AnyLogic helper library).</em></p>
 
 <div class="topLink"><a href="#">Top</a></div><br /><hr />
 
@@ -1038,21 +1070,19 @@ straightforward once you understand it. It is worth looking at the
 
 <br /><br />
 
-You <em>can</em> still use the standard logging method,
-but the threading problems mean that log messages can end up going to a 'dummy'
-log file in a <code>missingOutputFolder</code> directory, instead of the proper
-log file for the run (and messages in this dummy file may come from multiple
-runs).
+You <em>can</em> still use the standard logging method, but the threading
+problems mean that log messages can end up going to a 'dummy' log file in a
+<code>missingOutputFolder</code> directory, instead of the proper log file for
+the run (and messages in this dummy file may come from multiple runs).
 
 <br /><br />
 
-The problem with AnyLogic is that most logging solutions
-expect that threads identify the separate 'processes' to be logged. In the case
-of multi-run simulation experiments, JSIT (and the underlying Logback framework)
-requires that each (single-threaded) run is within the same thread or a
-(sequential) set of threads with the same parent: Mapped Diagnostic Contexts
-(MDCs) are used to tie threads with runs (and thus specific per-run output
-locations).
+The problem with AnyLogic is that most logging solutions expect that threads
+identify the separate 'processes' to be logged. In the case of multi-run
+simulation experiments, JSIT (and the underlying Logback framework) requires
+that each (single-threaded) run is within the same thread or a (sequential) set
+of threads with the same parent: Mapped Diagnostic Contexts (MDCs) are used to
+tie threads with runs (and thus specific per-run output locations).
 
 <br /><br />
 
@@ -1073,24 +1103,21 @@ which works around the threading issues. They also add a special extra method
 which can be used to ensure that log messages from third-party libraries
 (including from JSIT itself) also avoid the problems.</p>
 
-<p>However, there needs to be one AnyLogic logger for
-<em>each run's set of instances for a class</em>, not one per class as in the
-standard approach. If you use multi-run Experiments with parallel execution,
-then you will get instances of your model classes (e.g., Agents) for multiple
-runs together in the same JVM. For example, a <code>Patient</code> Agent might
-have 10 instances as part of run 1, 20 as part of run 2 and 300 as part of run
-3. All 330 instances would potentially be existing at the same time in the same
-JVM. We need ways to separate out the AnyLogic loggers that runs 1-3 use.</p>
-
-<p>A run is identified by an instance of <code>MainModel_AnyLogic</code> which
-will be your 'top-level' class. (Actually, you want the closest enclosing
-instance of <code>MainModel_AnyLogic</code> since you can have multiple 'main
-models' to facilitate things like running the model with or without certain
-visualisations.)</p>
+<p>However, there needs to be one AnyLogic logger for <em>each run's set of
+instances for a class</em>, not one per class as in the standard approach. If
+you use multi-run Experiments with parallel execution, then you will get
+instances of your model classes (e.g., Agents) for multiple runs together in the
+same JVM. For example, a <code>Patient</code> Agent might have 10 instances as
+part of run 1, 20 as part of run 2 and 300 as part of run 3. All 330 instances
+would potentially be existing at the same time in the same JVM. We need ways to
+separate out the AnyLogic loggers that runs 1-3 use.</p>
 
 <p>You have three alternatives:
 
 <ol>
+
+<div class="sideNote">If your class is not an Agent, you need to replace the
+<code>this</code> with a reference to some (any) Agent in your model.</div>
 
 <li>If your classes (AnyLogic Agents or otherwise) only ever have one instance
 (they are singleton classes), you can include an <code>AnyLogicLogger</code>
@@ -1098,13 +1125,12 @@ directly in that instance at startup time:
 
 <pre>
 logger = AnyLogicLoggerAccessor.getAccessorFreeAnyLogicLogger(
-                            TheComponent.class, mainModel);
+                            TheComponent.class, this);
 </pre>
 
-where <code>TheComponent</code> is the name of the class, <code>mainModel</code>
-is a reference to the relevant <code>MainModel_AnyLogic</code> instance, and
+where <code>TheComponent</code> is the name of the class, and
 <code>logger</code> is your <code>AnyLogicLogger</code> instance (typically an
-AnyLogic variable).
+AnyLogic variable).</li>
 
 <li>If you are <b>sure</b> that you will never be using multi-run Experiments
 with runs in parallel, you can hold a single AnyLogic logger statically (i.e.,
@@ -1118,47 +1144,24 @@ the correct one each time you need it:
 <pre>
 // Set up 'empty' accessor
 loggerAccessor = new AnyLogicLoggerAccessor(TheComponent.class);
-// Add logger for this run (done once per run), passing main model reference
-loggerAccessor.addLoggerForRun(mainModel);
+// Add logger for this run (done once per run), passing an Agent in the model
+loggerAccessor.addLoggerForRun(this);
 // Later on when using the logger to log messages
-loggerAccessor.getLoggerForRun(mainModel).info("My important message");
+loggerAccessor.getLoggerForRun(this).info("My important message");
 </pre>
 
-Normally you'd set up the empty accessor as part of setting your static variable's
-initial value, and you'd add the per-run logger at simulation initialisation
-time. To help with the latter, <code>MainModel_AnyLogic</code> has a method
-<code>doAllStaticPerRunLoggerSetup</code> which your main model class (which is
-a subclass of <code>MainModel_AnyLogic</code>) must implement, and which will be
-called early on during model initialisation. It is expected
+Normally you'd set up the empty accessor as part of setting your static
+variable's initial value, and you'd add the per-run logger at simulation
+initialisation time. To help with the latter, <code>MainModel_AnyLogic</code>
+has a method <code>doAllStaticPerRunLoggerSetup</code> which your main model
+class (which is a subclass of <code>MainModel_AnyLogic</code>) must implement,
+and which will be called early on during model initialisation. It is expected
 that you will use this method to set up the per-run loggers for all classes that
 need one. (You can just directly do this for all the classes, or code your own
 functions (methods) so that the top-level class chains down through the embedded
-Agents, each of which adds its own per-run logger.)
-</li>
+Agents, each of which adds its own per-run logger.) </li>
 
 </ol>
-
-<div class="sideNote">You can also use the AnyLogic-provided
-<code>get_Main()</code> or similar to get the enclosing instance, but some model
-designs may not have a fixed hierarchy of Agents for all runs, and thus there
-might not be a fixed main model 'parent' to hardcode here.
-
-<br /><br />
-
-The JSIT helper method just chains through the owners of the given Agent (via
-the AnyLogic <code>getOwner()</code> method) until a
-<code>MainModel_AnyLogic</code> instance is reached.</div>
-
-<p>To help in getting a <code>MainModel_AnyLogic</code> instance to set up and
-(in case 3) retrieve the logger, there is a static helper method in
-<code>MainModel_AnyLogic</code>: <code>getMainFor(Agent agent)</code>, so you
-can code your logging statements (including logger retrieval) something like
-
-<pre>
-loggerAccessor.getLoggerForRun(MainModel_AnyLogic.getMainFor(this))
-                                        .info("My important message");
-</pre>
-</p>
 
 <p><b>NB</b>: You will need import statements for the relevant classes, which is
 easiest to do for their entire packages as below. (For AnyLogic Agents, this is
@@ -1363,12 +1366,12 @@ control file</span> in your inputs directory called
 detailing the format).</p>
 
 <p>Because some simulations may have multiple model runs in parallel (within the
-same JVM) this means that we <em>cannot</em> assume that all instances of a
-model component (Java class) are part of the same model. Thus, stochastic items
-are registered per-model-instance and stored/accessed via a <span
-class="term">stochastic accessor</span>. For the same reasons as with logging,
-AnyLogic models should use a different form of accessor to non-AnyLogic
-models.</p>
+same JVM) this means that we <em>cannot</em> always assume that all instances of
+a model component (Java class) are part of the same model. Thus, stochastic
+items can be registered per-model-instance and stored/accessed via a <span
+class="term">stochastic accessor</span> (in a very similar way to how logging
+works for AnyLogic; see earlier). For the same reasons as with logging, AnyLogic
+models should use a different form of accessor to non-AnyLogic models.</p>
 
 <p>As well as standard distributions, JSIT also provides some useful classes for
 custom distributions and 'distribution lookups': a set of distributions (of the
@@ -1406,6 +1409,15 @@ can do both.)</p>
 (i.e., from all instances), where you pass the <code>Class</code> of the source;
 and one to register for events from a particular class instance, where you pass
 the specific <code>EventSource</code> instance.</p>
+
+<p>All domain events will be logged to a special events log file per run.</p>
+
+<p>The basic relationships between classes is show in figure 3 below:</p>
+
+<img src="diagrams/eventsArchitecture.png"></img>
+
+<p><b>Figure 3</b>: <em>Overview of JSIT domain events architecture, as a UML
+class diagram.</em></p>
 
 <p>See the <a href="#exampleModels">example models</a> for more details.</p>
 
