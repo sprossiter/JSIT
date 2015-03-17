@@ -73,6 +73,17 @@ public class DistFixedContinuous extends DistributionContinuous
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistFixedContinuous(fixedVal);
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 

@@ -89,6 +89,17 @@ public class DistExponential extends DistributionContinuous
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistExponential(mean);
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 

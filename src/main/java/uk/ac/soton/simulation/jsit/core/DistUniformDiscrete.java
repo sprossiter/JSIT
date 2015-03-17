@@ -76,8 +76,7 @@ public class DistUniformDiscrete<C extends Enum<C>>
     public DistUniformDiscrete(int min, int max) {
 
         super(max - min + 1, true);     // Keep locked for correctness-sake
-        setRange(min, max);
-        unlock();
+        setRange(min, max);             // This unlocks once finished
 
     }
 
@@ -101,6 +100,24 @@ public class DistUniformDiscrete<C extends Enum<C>>
         }
         unlock();
 
+    }
+    
+    /**
+     * Get the Range (DistributionCategorical.Range) for this distribution.
+     * 
+     * @since 0.2
+     * 
+     * @return The uniform discrete range as a Range object.
+     */
+    public Range getRange() {
+        
+        if (usesMappedRanges()) {
+            return getSubRange(0);
+        }
+        else {
+            return null;
+        }
+        
     }
 
     /**
@@ -133,6 +150,32 @@ public class DistUniformDiscrete<C extends Enum<C>>
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        DistUniformDiscrete copy;
+        Range currRange;
+        
+        if (usesEnumCategory()) {
+            copy = new DistUniformDiscrete(getCategory());
+            if (usesMappedRanges()) {
+                currRange = getRange();
+                copy.addRange(currRange.min, currRange.max);
+            }
+        }
+        else {
+            currRange = getRange();
+            copy = new DistUniformDiscrete(currRange.min, currRange.max);
+        }
+        return copy;
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 
@@ -152,6 +195,5 @@ public class DistUniformDiscrete<C extends Enum<C>>
         return sample;
 
     }
-
 
 }

@@ -1,6 +1,7 @@
 package uk.ac.soton.simulation.jsit.core;
 
 import java.io.Serializable;
+
 import com.thoughtworks.xstream.XStream;
 
 /**
@@ -93,6 +94,17 @@ public class DistGeometric extends DistributionDiscrete implements Serializable 
         
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistGeometric(p);
+        
+    }
+
     
     // **************** Protected/Package-Access Instance Methods **********************
     
@@ -121,4 +133,5 @@ public class DistGeometric extends DistributionDiscrete implements Serializable 
         }
     }
 
+    
 }

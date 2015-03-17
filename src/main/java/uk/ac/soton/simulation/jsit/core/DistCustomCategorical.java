@@ -19,9 +19,8 @@
 package uk.ac.soton.simulation.jsit.core;
 
 import java.io.Serializable;
-
+import java.util.Arrays;
 import org.slf4j.*;
-
 import com.thoughtworks.xstream.XStream;
 
 /**
@@ -181,6 +180,39 @@ public class DistCustomCategorical<C extends Enum<C>>
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        DistCustomCategorical copy;
+        Range currRange;
+        double[] pmfCopy = Arrays.copyOf(pmf, pmf.length);
+        
+        if (usesEnumCategory()) {
+            copy = new DistCustomCategorical(getCategory(), pmfCopy);          
+        }
+        else {
+            copy = new DistCustomCategorical(pmfCopy, false);
+        }
+        
+        if (usesMappedRanges()) {
+            copy.lock();
+            for (int i = 0; i < getNumSubRanges(); i++) {
+                currRange = getSubRange(i);
+                assert currRange != null;
+                copy.addRange(currRange.min, currRange.max);
+            }
+            copy.unlock();
+        }        
+        
+        return copy;
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 
@@ -222,6 +254,5 @@ public class DistCustomCategorical<C extends Enum<C>>
         return sample;
 
     }
-
 
 }

@@ -45,10 +45,17 @@ public abstract class Distribution extends AbstractStochasticItem
 
     // ************************* Public Methods *************************************
 
-    /*
-     * Force concrete subclasses to override toString()
+    /**
+     * Force concrete subclasses to override toString().
      */
     @Override
     public abstract String toString();
+    
+    /**
+     * Create an unregistered copy of this distribution.
+     * 
+     * @return The unregistered copy. (This will need casting as appropriate.)
+     */
+    public abstract AbstractStochasticItem createUnregisteredCopy();
 
 }

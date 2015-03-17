@@ -113,6 +113,17 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistBernoulli(p);
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 

@@ -97,6 +97,17 @@ public class DistNormal extends DistributionContinuous implements Serializable {
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistNormal(mean, sd);
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 
@@ -116,5 +127,6 @@ public class DistNormal extends DistributionContinuous implements Serializable {
         return sample;
 
     }
+
 
 }

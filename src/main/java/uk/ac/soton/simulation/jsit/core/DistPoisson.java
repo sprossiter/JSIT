@@ -1,6 +1,7 @@
 package uk.ac.soton.simulation.jsit.core;
 
 import java.io.Serializable;
+
 import com.thoughtworks.xstream.XStream;
 
 /**
@@ -85,6 +86,17 @@ public class DistPoisson extends DistributionDiscrete implements Serializable {
     public String toString() {
         
         return "Poisson(" + lambda + ")";
+        
+    }
+
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistPoisson(lambda);
         
     }
 

@@ -142,9 +142,7 @@ public abstract class DistributionCategorical<C extends Enum<C>>
      */
     public void lock() {
         
-        if (isLocked) {
-            throw new IllegalStateException("Distribution is already locked");
-        }
+        // OK to lock when already locked
         isLocked = true;
         
     }
@@ -386,8 +384,14 @@ public abstract class DistributionCategorical<C extends Enum<C>>
 
     }
     
+    protected int getNumSubRanges() {
+        
+        return ranges.size();
+        
+    }
+    
     /*
-     * Get a particular sub-range.
+     * Get a particular sub-range. Returns null if no such index sub-range exists
      */
     protected Range getSubRange(int rangeIdx) {
 

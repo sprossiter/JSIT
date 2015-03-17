@@ -53,6 +53,7 @@ public class DistLookupByEnums<D extends Distribution>
         MultiDimEnumMap.setupForInfoSerialisation(xstream);
 
     }
+    
 
     // ************************ Instance Fields ***************************************
 
@@ -60,6 +61,7 @@ public class DistLookupByEnums<D extends Distribution>
      * Internally, this class is just a simple wrapper around MultiDimEnumMap
      */
     private final MultiDimEnumMap<D> multiDimMap;
+    
 
     // ************************* Constructors *****************************************
 
@@ -114,7 +116,6 @@ public class DistLookupByEnums<D extends Distribution>
         return multiDimMap.toString();
 
     }
-
 
     /*
      * Override accessor registration to also register for all the lookup's dists

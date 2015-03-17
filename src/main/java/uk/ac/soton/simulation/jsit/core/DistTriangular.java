@@ -162,6 +162,17 @@ public class DistTriangular extends DistributionContinuous
 
     }
 
+    /**
+     * Create an unregistered copy of this distribution.
+     * @since 0.2
+     */
+    @Override
+    public AbstractStochasticItem createUnregisteredCopy() {
+        
+        return new DistTriangular(min, mode, max);
+        
+    }
+
 
     // ******************* Protected/Package-Access Methods *************************
 

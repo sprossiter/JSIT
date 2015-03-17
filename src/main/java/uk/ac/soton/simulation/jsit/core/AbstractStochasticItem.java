@@ -42,7 +42,7 @@ public abstract class AbstractStochasticItem implements Serializable {
     private Sampler sampler = null;            // Framework-specific sampler
 
 
-    // ************************ Constructors ********************************************
+    // ************************** Constructors ****************************************
 
     protected AbstractStochasticItem() {
 
@@ -51,7 +51,7 @@ public abstract class AbstractStochasticItem implements Serializable {
     }
 
 
-    // **************** Protected / Package-Access Methods ******************************
+    // ********************* Public Instance Methods **********************************
 
     /**
      * Internal method exposed for technical reasons. Called only by accessor
@@ -74,6 +74,19 @@ public abstract class AbstractStochasticItem implements Serializable {
         this.sampler = sampler;
 
     }
+    
+    /*
+     * Create an unregistered copy of this stochastic item.
+     * TODO: Implement this (instead of only for Distribution subclasses), though
+     * considerable work to duplicate a MultiDimEnumMap
+     * 
+     * @return The unregistered copy. (This will need casting as appropriate.)
+     */
+    //public abstract AbstractStochasticItem createUnregisteredCopy();
+
+
+    
+    // ************ Protected / Package-Access Instance Methods ***********************
 
     /*
      * Called only model initialiser when cleaning up at end of run
@@ -83,7 +96,7 @@ public abstract class AbstractStochasticItem implements Serializable {
         getAccessInfo().removeMe(this);
 
     }
-
+    
     protected AbstractStochasticAccessInfo getAccessInfo() {
 
         if (accessInfo == null) {
@@ -93,9 +106,6 @@ public abstract class AbstractStochasticItem implements Serializable {
 
     }
 
-    /*
-     * Can be called by extra-package user-defined stochastic items (subclasses)
-     */
     protected Sampler.SampleMode getSampleMode() {
 
         return getAccessInfo().getSampleMode();
@@ -110,5 +120,6 @@ public abstract class AbstractStochasticItem implements Serializable {
         return sampler;
 
     }
+
 
 }

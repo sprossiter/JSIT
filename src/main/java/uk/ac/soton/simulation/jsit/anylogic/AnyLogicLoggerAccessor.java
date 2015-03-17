@@ -161,7 +161,8 @@ public class AnyLogicLoggerAccessor implements Serializable {
     void removeForRun(MainModel_AnyLogic mainModel) {
 
         assert mainModel != null;
-        Logger removedLogger = itemsPerRun.remove(mainModel);
+        Logger removedLogger = itemsPerRun.remove(
+                    mainModel.getModelInitialiser().getRunID());
         assert removedLogger != null;
 
     }
