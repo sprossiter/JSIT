@@ -26,6 +26,7 @@ import com.anylogic.engine.Engine;
 import com.anylogic.engine.Engine.State;
 
 import java.text.DecimalFormat;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -281,7 +282,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     @Override
     public String getInputsBasePath() {
 
-        return "Inputs";
+        return ".." + File.separator + "Inputs";
 
     }    
 
@@ -295,7 +296,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     @Override
     public String getOutputsBasePath() {
 
-        return "Outputs";
+        return ".." + File.separator + "Outputs";
 
     }
 
