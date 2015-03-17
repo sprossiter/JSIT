@@ -35,7 +35,7 @@
 <h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
 <p class="subHeading"><b>JSIT Version: </b>0.2
 <br />
-<b>Last Updated: </b>12th March 2015</p>
+<b>Last Updated: </b>17th March 2015</p>
 
 <h2>Contents</h2>
 
@@ -869,30 +869,20 @@ The <a href="#exampleModels">example model</a> shows this in action: see Agents
 </ol>
 </p>
 
-<h5>Dependencies</h5>
+<h5>Logging Configuration Location</h5>
 
-<p>All the JAR file dependencies discussed earlier, plus the JSIT AnyLogic
-helper library <code>jsit-anylogic-0.2.jar</code>, need adding to your AnyLogic
-simulation file as dependencies (in the Dependencies section of the model's
-Properties). AnyLogic has an issue where model dependencies that are not within
-the same directory as the model file are referenced internally using
-<em>absolute</em> file paths, which means that they will break if the model
-moves to a new absolute path (e.g., from under one user's home directory to
-another's), even if the relative path to the dependency stays the same. For this
-reason, I recommend storing your dependencies in a <code>Libs</code> folder
-<em>within</em> your ALP files' directories and not having an explicit
-<code>Source</code> subdirectory.</p>
+<div class="sideNote">You can't include it in a <code>LoggingConfig</code>
+folder <i>outside of</i> the ALP file <code>Source</code> folder because
+AnyLogic currently (v7.1.2) has an issue where <i>class folder</i> model
+dependencies that are not within the same directory as the model file are
+referenced internally using <em>absolute</em> file paths, which means that they
+will break if the model moves to a new absolute path (e.g., from under one
+user's home directory to another's), even if the relative path to the dependency
+stays the same. This was fixed in AnyLogic 7.1.2 for JAR files (and so is not an
+issue for other dependencies as below), but the problem remains for class
+folders.</div>
 
-<p>If you are using wrapper Agents as above in a separate experiments
-ALP file, then these dependencies will automatically be used at
-<em>run-time</em> because you are referencing that ALP file as a dependency
-(which happens automatically when you drag an instance of the main Agent into
-your wrapper Agent). However, you will also need to add the two JSIT libraries
-(only) as dependencies for the experiments ALP file because they are needed at
-<em>compile</em> time (<code>jsit-core-0.2.jar</code> and
-<code>jsit-anylogic-0.2.jar</code>).</p>
-
-<p>In addition, AnyLogic does not copy across files to its 'hidden' build area
+<p>AnyLogic does not copy across files to its 'hidden' build area
 which are not referenced from the ALP file, so you cannot include
 <code>logback.xml</code> in the same directory as the ALP file and have it on
 the Java classpath at runtime. The simplest way to achieve it is to put
@@ -901,6 +891,36 @@ directory (under the folder where the ALP file is) and add this as a dependency
 to the experiments ALP file (specifying it as an External Class Folder and not
 importing it to the model folder).</p>
 
+<h5>Dependencies</h5>
+
+<p>All the JAR file dependencies discussed earlier, plus the JSIT AnyLogic
+helper library <code>jsit-anylogic-&lt;ver&gt;.jar</code>, need adding to your
+AnyLogic simulation file as dependencies (in the Dependencies section of the
+model's Properties).</p>
+
+<p>Dependencies should be set as Java archive files accessed from their original
+location and <i>referred to by model folder</i> (see Figure 3 below), which
+ensures that relative paths to them are stored in the ALP file (and thus that
+the code is transferable to different directories; e.g., another user's home
+directory).
+
+<br /><br />
+
+<img src="diagrams/alAddDependency.png"></img></p>
+
+<p><b>Figure 3</b>: <em>Screenshot of the AnyLogic add dependency (classpath
+entry) window showing the required settings.</em></p>
+
+<p>If you are using wrapper Agents as above in a separate experiments
+ALP file, then these dependencies will automatically be used at
+<em>run-time</em> because you are referencing that ALP file as a dependency
+(which happens automatically when you drag an instance of the main Agent into
+your wrapper Agent). However, you will also need to add the two JSIT libraries
+(only) as dependencies for the experiments ALP file because they are needed at
+<em>compile</em> time (<code>jsit-core-&lt;ver&gt;.jar</code> and
+<code>jsit-anylogic-&lt;ver&gt;.jar</code>); you can reference them from the
+main model ones (canonically in <code>Sim/Libs</code>).</p>
+
 <p>Given all this, the canonical file structure would be as follows for an
 AnyLogic model (also showing the ALP files):
 
@@ -908,8 +928,9 @@ AnyLogic model (also showing the ALP files):
 ModelX
     commitModel.bat
     Sim
-        ModelX.alp
         modelVersion.properties
+        Source
+            ModelX.alp
         Libs
             commons-codec-1.10.jar
             commons-configuration-1.10.jar
@@ -925,12 +946,11 @@ ModelX
             xpp3_min-1.1.4c.jar
             xstream-1.4.7.jar
     Experiments
-        ModelX_Experiments.alp
-        LoggingConfig
-            logback.xml
+        Source
+            ModelX_Experiments.alp
+            LoggingConfig
+                logback.xml
         Libs
-            jsit-anylogic-0.2.jar
-            jsit-core-0.2.jar
         Inputs
             modelSourcePaths.properties
         Outputs
@@ -942,12 +962,12 @@ ModelX
 <p>The runtime working directory for AnyLogic models is set as the directory
 where the <em>source</em> ALP file is which is being run. Thus, when running an
 experiment using the canonical file structure above, the working directory is
-the <code>ModelX/Experiments</code> folder, and your
+the <code>ModelX/Experiments/Source</code> folder, and your
 <code>modelSourcePaths.properties</code> entries should be as below:
 
 <pre>
-ModelVersionFileDir = ../Sim
-SimSourcePath = ../Sim
+ModelVersionFileDir = ../../Sim
+SimSourcePath = ../../Sim
 </pre>
 </p>
 
@@ -1412,11 +1432,11 @@ the specific <code>EventSource</code> instance.</p>
 
 <p>All domain events will be logged to a special events log file per run.</p>
 
-<p>The basic relationships between classes is show in figure 3 below:</p>
+<p>The basic relationships between classes is show in figure 4 below:</p>
 
 <img src="diagrams/eventsArchitecture.png"></img>
 
-<p><b>Figure 3</b>: <em>Overview of JSIT domain events architecture, as a UML
+<p><b>Figure 4</b>: <em>Overview of JSIT domain events architecture, as a UML
 class diagram.</em></p>
 
 <p>See the <a href="#exampleModels">example models</a> for more details.</p>
