@@ -99,7 +99,7 @@ public class DistGeometric extends DistributionDiscrete implements Serializable 
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistGeometric(p);
         

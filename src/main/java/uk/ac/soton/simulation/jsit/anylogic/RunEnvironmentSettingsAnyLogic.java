@@ -33,9 +33,9 @@ class RunEnvironmentSettingsAnyLogic extends RunEnvironmentSettings {
     // ************************ Static Member Classes **********************************
 
     static class RandomnessSettings {
-        final long seed;
-        final long baseSeed;
-        private RandomnessSettings(long seed, long baseSeed) {
+        final String seed;
+        final String baseSeed;
+        private RandomnessSettings(String seed, String baseSeed) {
             this.seed = seed;
             this.baseSeed = baseSeed;
         }
@@ -61,8 +61,10 @@ class RunEnvironmentSettingsAnyLogic extends RunEnvironmentSettings {
         if (mainModel.getEngine().getDefaultRandomGenerator() instanceof RandomWithSeedAccess) {
             RandomWithSeedAccess rng = (RandomWithSeedAccess)
                     mainModel.getEngine().getDefaultRandomGenerator();
-            this.randomnessSettings = new RandomnessSettings(rng.getSeed(),
-                    RandomWithSeedAccess.getBaseSeed());
+            Long baseSeed = RandomWithSeedAccess.getBaseSeed();
+            this.randomnessSettings = new RandomnessSettings(
+                    Long.toString(rng.getSeed()),
+                    baseSeed == null ? "N/A" : Long.toString(baseSeed));
         }
         else {
             this.randomnessSettings = null;

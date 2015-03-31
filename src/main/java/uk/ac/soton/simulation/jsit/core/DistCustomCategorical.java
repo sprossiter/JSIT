@@ -186,7 +186,7 @@ public class DistCustomCategorical<C extends Enum<C>>
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         DistCustomCategorical copy;
         Range currRange;

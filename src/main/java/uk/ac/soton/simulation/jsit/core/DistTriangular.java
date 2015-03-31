@@ -167,7 +167,7 @@ public class DistTriangular extends DistributionContinuous
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistTriangular(min, mode, max);
         

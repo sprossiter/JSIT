@@ -112,7 +112,7 @@ public abstract class AbstractStochasticItem implements Serializable {
 
     }
 
-    protected Sampler getSampler() {
+    public Sampler getSampler() {
 
         if (sampler == null) {
             throw new IllegalStateException("Stochastic item not added to (registered via) an accessor");

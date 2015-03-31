@@ -52,10 +52,32 @@ public abstract class Distribution extends AbstractStochasticItem
     public abstract String toString();
     
     /**
-     * Create an unregistered copy of this distribution.
+     * Create an unregistered copy of this distribution, which will then need
+     * registering separately to be usable (and will be subject to any settings for
+     * the owner and ID it is registered with).
      * 
      * @return The unregistered copy. (This will need casting as appropriate.)
      */
-    public abstract AbstractStochasticItem createUnregisteredCopy();
+    public abstract Distribution createUnregisteredCopy();
+    
+    /**
+     * Create a registered copy of this distribution; i.e., one which will be
+     * subject to the same settings as the one it was copied from, and which has
+     * no separate registered ID.
+     * 
+     * @return The registered copy. (This will need casting as appropriate.)
+     */
+    public Distribution createRegisteredCopy() {
+        
+        Distribution item = (Distribution) createUnregisteredCopy();
+        item.registerSampler(getSampler());
+        // Can copy the access info ref (which may be an accessor) OK since only
+        // the original Distribution is actually held by the accessor (and listed in
+        // the model initialiser) and thus only that is worked with at model destroy
+        // time
+        item.registerAccessInfo(getAccessInfo());
+        return item;
+        
+    }
 
 }

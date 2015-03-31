@@ -78,7 +78,7 @@ public class DistFixedContinuous extends DistributionContinuous
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistFixedContinuous(fixedVal);
         

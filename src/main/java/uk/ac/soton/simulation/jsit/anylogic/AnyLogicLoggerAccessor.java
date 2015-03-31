@@ -140,7 +140,7 @@ public class AnyLogicLoggerAccessor implements Serializable {
      * method will actually search for the closest 'parent' MainModel_AnyLogic
      * instance, so passing that (if available directly) will speed up the call.
      */
-    public Logger getLoggerForRun(Agent agentInModel) {
+    public AnyLogicLogger getLoggerForRun(Agent agentInModel) {
         
         return getLoggerForRun(MainModel_AnyLogic.getMainFor(agentInModel));
         
@@ -196,7 +196,7 @@ public class AnyLogicLoggerAccessor implements Serializable {
     /*
      * Get run-ID-keyed logger instance
      */
-    private Logger getLoggerForRun(MainModel_AnyLogic mainModel) {
+    private AnyLogicLogger getLoggerForRun(MainModel_AnyLogic mainModel) {
 
         // Thread-safe via use of MDC and Hashtable
         

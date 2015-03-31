@@ -118,7 +118,7 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistBernoulli(p);
         
@@ -136,8 +136,9 @@ extends DistributionCategorical<Sampler.Binary> implements Serializable {
         if (mode == Sampler.SampleMode.NORMAL) {
             sample = getSampler().sampleBernoulli(p);
         }
-        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {           
-            sample = (p < 0.5 ? 2 : 1);
+        else if (mode == Sampler.SampleMode.COLLAPSE_MID) {
+            // Return 1 for failure, 2 for success
+            sample = (p < 0.5 ? 1 : 2);
         }
 
         return sample;

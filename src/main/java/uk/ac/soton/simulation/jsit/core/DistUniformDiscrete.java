@@ -156,7 +156,7 @@ public class DistUniformDiscrete<C extends Enum<C>>
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         DistUniformDiscrete copy;
         Range currRange;

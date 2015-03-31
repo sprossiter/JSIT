@@ -94,7 +94,7 @@ public class DistPoisson extends DistributionDiscrete implements Serializable {
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistPoisson(lambda);
         

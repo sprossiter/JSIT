@@ -107,7 +107,7 @@ public class DistUniform extends DistributionContinuous implements Serializable 
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistUniform(min, max);
         

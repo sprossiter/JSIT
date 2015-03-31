@@ -126,7 +126,7 @@ public class DistNegativeBinomial extends DistributionDiscrete implements Serial
      * @since 0.2
      */
     @Override
-    public AbstractStochasticItem createUnregisteredCopy() {
+    public Distribution createUnregisteredCopy() {
         
         return new DistNegativeBinomial(n, p);
         
