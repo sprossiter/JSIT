@@ -58,10 +58,13 @@ class RunEnvironmentSettingsAnyLogic extends RunEnvironmentSettings {
 
         super(mainModel);
 
-        if (mainModel.getEngine().getDefaultRandomGenerator() instanceof RandomWithSeedAccess) {
-            RandomWithSeedAccess rng = (RandomWithSeedAccess)
+        if (mainModel.getEngine().getDefaultRandomGenerator() instanceof SeedAccessibleRNG) {
+            SeedAccessibleRNG rng = (SeedAccessibleRNG)
                     mainModel.getEngine().getDefaultRandomGenerator();
-            Long baseSeed = RandomWithSeedAccess.getBaseSeed();
+            Long baseSeed = null;
+            if (rng instanceof RandomWithSeedAccess) {
+                baseSeed = RandomWithSeedAccess.getBaseSeed();
+            }
             this.randomnessSettings = new RandomnessSettings(
                     Long.toString(rng.getSeed()),
                     baseSeed == null ? "N/A" : Long.toString(baseSeed));

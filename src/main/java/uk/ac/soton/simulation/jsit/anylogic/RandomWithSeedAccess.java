@@ -63,7 +63,7 @@ import com.anylogic.engine.Utilities;
  * @since 0.1
  */
 public class RandomWithSeedAccess extends java.util.Random
-                                  implements java.io.Serializable {
+                                  implements SeedAccessibleRNG, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -189,11 +189,12 @@ public class RandomWithSeedAccess extends java.util.Random
     }
 
     /**
-     * Get the seed value used for this instance.
+     * Get the seed value used for this instance (as per SeedAccessibleRNG interface).
      * 
      * @since 0.1
      * @return The seed value.
      */
+    @Override
     public long getSeed() {
 
         return seedCopy;
