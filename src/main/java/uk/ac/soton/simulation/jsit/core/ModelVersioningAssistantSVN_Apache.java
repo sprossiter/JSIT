@@ -95,8 +95,15 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
                                        PropertiesConfiguration versionProps) {
 
         super(inVCS_SimCodePath, modelVersionFile, versionProps);
-        this.hlClient = new SVNClient();
-        logger.info("Using Java HL native version " + hlClient.getVersion().toString());
+        // Don't use/instantiate native SVN library if sim code path not specified
+        // No methods in this class should ever be called
+        if (inVCS_SimCodePath == null) {
+            this.hlClient = null;
+        }
+        else {
+            this.hlClient = new SVNClient();
+            logger.info("Using Java HL native version " + hlClient.getVersion().toString());
+        }
 
     }
 
@@ -113,6 +120,7 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
     @Override
     boolean fileIsUnderVersionControl(File checkFile) {
 
+        assert hlClient != null;
         if (!(checkFile.exists())) {
             return false;
         }
@@ -158,6 +166,7 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
     @Override
     void doCommit(File sourceRootDir, final String changeNotes) {
 
+        assert hlClient != null;
         assert sourceRootDir.isDirectory();
         
         // Check if keywords property set up properly and set it up if needed
@@ -226,6 +235,7 @@ public class ModelVersioningAssistantSVN_Apache extends ModelVersioningAssistant
     @Override
     String getRawSVN_Version(File codeDir) {
 
+        assert hlClient != null;
         assert codeDir.isDirectory();
         try {
             return hlClient.getVersionInfo(codeDir.getAbsolutePath(),

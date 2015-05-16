@@ -56,7 +56,7 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
      */
     ModelVersioningAssistantSVN(List<File> inVCS_SimCodePath,
                                 File modelVersionFile,
-                    PropertiesConfiguration versionProps) {
+                                PropertiesConfiguration versionProps) {
 
         super(inVCS_SimCodePath, modelVersionFile, versionProps);
 
@@ -101,7 +101,7 @@ public abstract class ModelVersioningAssistantSVN extends ModelVersioningAssista
      * Convert the properties file URL property into the correct string for the
      * main model directory. The property value looks something like:
      *
-     * $HeadURL: https://svn.soton.ac.uk/[...]/versioning/modelVersion.xml $
+     * $HeadURL: https://mycoolrepo.repoland.com/[...]/Sim/modelVersion.properties $
      * 
      * (or $HeadURL$ if not yet committed to SVN)
      */
