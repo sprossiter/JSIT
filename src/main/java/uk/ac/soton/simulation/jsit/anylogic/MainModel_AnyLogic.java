@@ -206,6 +206,44 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
 
     // ********************** Public Instance Methods ******************************
 
+    /**
+     * Any processing required at run-end (cf. model destruction time). This
+     * does nothing, but subclasses should override this if required. It ensures
+     * that any main Agent always has such a method so that models with multiple
+     * layered main Agents can chain run-end processing.
+     * <p>
+     * A standard case is where one main represents the core domain model
+     * (runnable on its own) but may be composed by another main which includes
+     * metadata gathering (and could itself be composed by a third providing
+     * visualisation). The domain model main Agent accepts run-end criteria
+     * (i.e., stopping when a certain state is reached), which include a
+     * reference to the top-level main (as a MainModel_AnyLogic instance), which
+     * is null if the domain model main is not composed by anything for this
+     * run, and is available to the Experiment via the root reference. When the
+     * stop criteria are reached this can call runEndProcessing on this
+     * top-level main which will chain down the runEndProcessing for all
+     * composed instances (running the composed main run-end processing before
+     * performing their own).
+     * <p>
+     * A concrete example of where this is useful is where (a) the domain model
+     * main ensures some model state is finalised (say doing some final updates
+     * to state that is normally varied at regular intervals); (b) a composing
+     * meta-data-gathering main ensures that its statistics include the final
+     * state values (where they may otherwise have been gathered at regular
+     * intervals).
+     * <p>
+     * <b>NB</b>: This was made non-abstract (and here rather than in MainModel)
+     * so that existing models remain backwards-compatible. This will probably
+     * be moved to MainModel in future.
+     * 
+     * @since 0.2
+     */
+    public void runEndProcessing() {
+    
+        // Do nothing. Subclasses should override where needed
+        
+    }
+    
     // Overridden Agent Methods
 
     /**

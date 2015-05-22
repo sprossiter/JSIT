@@ -23,13 +23,15 @@ import java.io.Serializable;
 import org.slf4j.*;
 
 /**
- * JSIT abstract representation of all discrete probability distributions.
+ * JSIT abstract representation of all discrete probability distributions. Also
+ * implements ContinuousSampler so that it can be sampled 'as' a continuous
+ * distribution if required.
  * 
  * @author Stuart Rossiter
  * @since 0.1
  */    
 public abstract class DistributionDiscrete
-                extends Distribution implements Serializable {
+                extends Distribution implements ContinuousSampler, Serializable {
 
     // ************************ Static Fields *****************************************
 
@@ -75,6 +77,17 @@ public abstract class DistributionDiscrete
 
         return sample;
 
+    }
+    
+    /**
+     * Sample as though a continuous distribution (just returns the sampled
+     * integer as a double).
+     */
+    @Override
+    public double sampleDouble() {
+        
+        return (double) sampleInt();
+        
     }
 
     /*

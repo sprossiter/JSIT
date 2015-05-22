@@ -71,7 +71,7 @@
     <property name="libver.commons-configuration" value="1.10" />
     <property name="libver.commons-lang" value="2.6" />
     <property name="libver.commons-logging" value="1.2" />
-    <property name="libver.anylogic" value="7.1.1" />
+    <property name="libver.anylogic" value="7.1.2" />
 
     <property name="libver.libsvn.V6" value="1.6.23" />
     <!-- CollabNet and SlikSVN now at v1.8.11 (and WANDisco for x32 only) -->

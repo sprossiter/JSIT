@@ -29,7 +29,7 @@ import org.slf4j.*;
  * @since 0.1
  */    
 public abstract class DistributionContinuous
-                extends Distribution implements Serializable {
+                extends Distribution implements ContinuousSampler, Serializable {
 
     // ************************ Static Fields *****************************************
 
@@ -53,6 +53,7 @@ public abstract class DistributionContinuous
      * Sample a double; distribution must have been registered (sample mode set)
      * first
      */
+    @Override
     public double sampleDouble() {
 
         AbstractStochasticAccessInfo accessor = getAccessInfo();
