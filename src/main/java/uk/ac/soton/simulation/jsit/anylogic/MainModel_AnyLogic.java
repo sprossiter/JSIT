@@ -342,7 +342,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default diagnostic log sim time formatting (as raw time to 0 d.p. + day + HH:MM).
      * The modeller should override this method (using the helper methods to compose
      * constituent parts) for their own formatting. This default implementation is as below:
-     * <p>
+     *
      * <pre>
      * if (modelIsInitialising()) {
      *     return "MODEL INIT";
@@ -372,7 +372,7 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
      * Default events log sim time formatting (as day + HH:MM).
      * The modeller should override this method (using the helper methods to compose
      * constituent parts) for their own formatting. This default implementation is as below:
-     * <p>
+     * 
      * <pre>
      * if (modelIsInitialising()) {
      *     return "MODEL INIT";

@@ -564,7 +564,7 @@ public abstract class ModelInitialiser {
 
     /**
      * Method exposed for technical reasons; not intended for JSIT user use.
-     * 
+     * <p>
      * Register a dist or lookup, which involves setting its sample mode and checking for
      * double registrations. Returns the sampler so that the caller (a stoch accessor)
      * can register itself and the sampler in the stoch item.
