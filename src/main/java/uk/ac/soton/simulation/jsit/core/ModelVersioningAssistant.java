@@ -379,7 +379,8 @@ public abstract class ModelVersioningAssistant {
             }
             File currFile = new File(currPath);
             if (!currFile.exists()) {
-                return null;
+            	logger.warn("Classpath file " + currPath + " does not exist; ignoring");
+            	continue;
             }
             logger.trace("Extracted " + currPath + " from path");
             pathFiles.add(currFile);

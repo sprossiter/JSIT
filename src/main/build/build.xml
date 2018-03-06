@@ -196,27 +196,31 @@
         	<arg line="-f markdown -t html README.md" />
         </exec>
 
-        <!-- Compile source code -->
+        <!-- Compile source code and copy it for inclusion in JAR later -->
 
         <javac srcdir="src/main/java" destdir="buildTemp/bin" source="1.6" target="1.6"
                includeantruntime="false">
             <classpath refid="build.classpath" />
         </javac>
+    	
+    	<copy todir="buildTemp/bin">
+    		<fileset dir="src/main/java" />
+    	</copy>
 
         <!-- TODO: Add all automated tests -->
 
-        <!-- Create JSIT JARs (with renamed license files) and Javadoc -->
+        <!-- Create JSIT JARs (with renamed license files, including source) and Javadoc -->
+    	
+    	<jar basedir="buildTemp/bin"
+    	     destfile="${build.area.dist}/lib/jsit-core-${jsit.ver}.jar"
+    		 includes="uk/ac/soton/simulation/jsit/core/*"
+    	     compress="true" encoding="UTF-8" update="true" />
 
-        <jar basedir="buildTemp/bin"
-             destfile="${build.area.dist}/lib/jsit-core-${jsit.ver}.jar"
-             includes="uk/ac/soton/simulation/jsit/core/*.class"
-             compress="true" encoding="UTF-8" update="true" />
-
-        <jar basedir="buildTemp/bin"
-             destfile="${build.area.dist}/lib/jsit-anylogic-${jsit.ver}.jar"
-             includes="uk/ac/soton/simulation/jsit/anylogic/*.class"
-             compress="true" encoding="UTF-8" update="true" />
-
+    	<jar basedir="buildTemp/bin"
+    	     destfile="${build.area.dist}/lib/jsit-anylogic-${jsit.ver}.jar"
+    		 includes="uk/ac/soton/simulation/jsit/anylogic/*"
+    	     compress="true" encoding="UTF-8" update="true" />
+    	
         <copy file="lgpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE.txt" />
         <copy file="gpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE_GPL.txt" />
 
