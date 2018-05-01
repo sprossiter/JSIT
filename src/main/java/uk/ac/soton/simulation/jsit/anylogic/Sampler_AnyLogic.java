@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -160,6 +160,16 @@ public class Sampler_AnyLogic extends Sampler implements Serializable {
         
         return alSampler.triangular(min, max, mode);
         
+    }
+    
+    /*
+     * Weibull sample. AnyLogic calls the scale parameter beta, and the shape parameter alpha
+     */
+    @Override
+    protected double sampleWeibull(double shape, double scale) {
+    	
+    	return alSampler.weibull(scale, shape);		// Arguments order is beta, alpha
+    	
     }
 
 }

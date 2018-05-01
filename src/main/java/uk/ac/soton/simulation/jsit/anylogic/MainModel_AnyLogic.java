@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -259,14 +259,22 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
         // Superclass logic first (which will chain down through all embedded Agents)
         super.onCreate();        
 
-        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser
+        if (jsitInitialiser.isModelInitiator(this)) {        // Only do if we're the initialiser       	
             logger.debug("JSIT MainModel_AnyLogic onCreate() logic");
-            try {
-                jsitInitialiser.saveModelSettings();
-            }
-            catch (IOException e) {
-                // Have to convert since no access to visually-designed Agent constructors
-                throw new RuntimeException("Can't create model settings file!", e);
+            
+            // Suppress (remove) model setting savings for Java 9+ until issues with XStream and Java 9 are
+        	// sorted out; e.g., see https://issues.apache.org/jira/browse/MWAR-405
+            if (ModelInitialiser.getJRE_MajorVersionNumber() >= 9) {
+            	logger.warn("Suppressing model settings file generation due to incompatibility between "
+            				+ "the XStream library version used and Java 9+");
+            } else {           
+	            try {           	
+	                jsitInitialiser.saveModelSettings();
+	            }
+	            catch (IOException e) {
+	                // Have to convert since no access to visually-designed Agent constructors
+	                throw new RuntimeException("Can't create model settings file!", e);
+	            }
             }
 
             doAllStaticPerRunLoggerSetup();
@@ -552,7 +560,10 @@ public abstract class MainModel_AnyLogic extends Agent implements MainModel {
     AnyLogicLogger getPerRunAnyLogicLogger(Class<?> owner) {
 
         assert owner != null;
-        Logger logbackLogger = LoggerFactory.getLogger(owner);
+        // Until AnyLogic stops binding log4j to SLF4J, we have to get the logger
+        // explicitly from Logback
+        //Logger logbackLogger = LoggerFactory.getLogger(owner);
+        Logger logbackLogger = jsitInitialiser.getLogbackContext().getLogger(owner);
         AnyLogicLogger anyLogicLogger = anyLogicLoggersMap.get(logbackLogger);
         if (anyLogicLogger == null) {
             anyLogicLogger = new AnyLogicLogger(this, logbackLogger);

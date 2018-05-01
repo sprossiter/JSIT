@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -89,11 +89,18 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
      * XStream converter for any MainModel_AnyLogic subclass
      */
     private static class AnyLogicMainConverter implements Converter {
+    	
+    	private static boolean isConvertible(Class<?> clazz) {
+    		return MainModel_AnyLogic.class.isAssignableFrom(clazz);
+    	}
         
+    	@Override
         public boolean canConvert(@SuppressWarnings("rawtypes") Class clazz) {
-            return MainModel_AnyLogic.class.isAssignableFrom(clazz);
+    		// Delegate to static method shared by AnyLogicNonMainAgentConverter
+            return AnyLogicMainConverter.isConvertible(clazz);
         }
 
+    	@Override
         public void marshal(Object value,
                             HierarchicalStreamWriter writer,
                             MarshallingContext context) {
@@ -139,6 +146,7 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
             
         }
 
+    	@Override
         public Object unmarshal(HierarchicalStreamReader reader,
                                 UnmarshallingContext context) {            
             // TODO
@@ -146,7 +154,7 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
         }
         
     };
-    
+        
     
     // ***************************** Static Methods ****************************************
     
@@ -181,12 +189,16 @@ public class ModelInitialiser_AnyLogic extends ModelInitialiser implements Seria
     // *************************** Constructors ***************************************
     
     /*
-     * Private constructor: static factory method for instantiation
+     * Private constructor: static factory method for instantiation.
+     * Experiment is null if a custom experiment: Engine's getExperiment() returns
+     * null for custom experiments. (So we have to use a generic experiment name there.)
      */
     private ModelInitialiser_AnyLogic(Experiment<?> experiment,
                                       MainModel_AnyLogic mainModel) {
         
-        super(experiment.getClass().getSimpleName(), mainModel);
+        super(experiment == null ? "CustomExperiment" : experiment.getClass().getSimpleName(),
+        	  mainModel,
+        	  false);	// SLF4J is bound to log4j in AnyLogic 8; see comments in ModelInitialiser
         this.envSettings = new RunEnvironmentSettingsAnyLogic(mainModel);
         
     }

@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -35,20 +35,43 @@ import org.slf4j.LoggerFactory;
  */
 public class EventManager {
 
-    // Uses special events logger
-    private static final Logger eventsLogger = LoggerFactory.getLogger(
-            ModelInitialiser.EVENT_LOGGER_NAME);
-    private static final Logger diagnosticsLogger = LoggerFactory.getLogger(
-            EventManager.class);
+    // Uses special events logger (as well as general one for diagnostic messages)
+    private final Logger eventsLogger;
+    private final Logger diagnosticsLogger;
 
-    private final HashMap<Class<?>, LinkedList<EventReceiver>> generalHandlers;
-    private final HashMap<EventSource<?>, LinkedList<EventReceiver>> sourceSpecificHandlers;
+    private final Map<Class<?>, LinkedList<EventReceiver>> generalHandlers
+    					= new HashMap<Class<?>, LinkedList<EventReceiver>>();
+    private final Map<EventSource<?>, LinkedList<EventReceiver>> sourceSpecificHandlers
+    					= new HashMap<EventSource<?>, LinkedList<EventReceiver>>();
 
+    @Deprecated
+    /**
+     * No-arguments constructor.
+     * @since 0.1
+     * 
+     * Deprecated because we want to ensure we use the JSIT-initialised Logback
+     * logger and not anything else already bound to SLF4J.
+     */
     public EventManager() {
 
-        this.generalHandlers = new HashMap<Class<?>, LinkedList<EventReceiver>>();
-        this.sourceSpecificHandlers = new HashMap<EventSource<?>, LinkedList<EventReceiver>>();
+    	eventsLogger = LoggerFactory.getLogger(ModelInitialiser.EVENT_LOGGER_NAME);
+        diagnosticsLogger = LoggerFactory.getLogger(EventManager.class);
 
+    }
+    
+    /**
+     * Constructor.
+     * @since 0.2
+     * 
+     * @param modelInitialiser The model initialiser.
+     */
+    public EventManager(ModelInitialiser modelInitialiser) {
+    	
+    	eventsLogger = modelInitialiser.getLogbackContext().getLogger(
+    									ModelInitialiser.EVENT_LOGGER_NAME);
+    	diagnosticsLogger = modelInitialiser.getLogbackContext().getLogger(
+    									EventManager.class);
+    	
     }
 
     public void register(Class<?> sourceClass, EventReceiver receiver) {
@@ -90,7 +113,9 @@ public class EventManager {
      */
     public void publish(EventSource<?> source, String eventsLogMsg) {
 
-        // Log the event in the special logger if required
+        // Log the event in the special logger if required (i.e., if a message was
+    	// provided). The Logback configuration ensures the event msg is also included
+    	// in the diagnostics log
         if (eventsLogMsg != null) {
             eventsLogger.info(eventsLogMsg);
         }

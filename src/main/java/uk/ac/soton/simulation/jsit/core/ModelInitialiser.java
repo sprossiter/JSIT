@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -21,7 +21,9 @@ package uk.ac.soton.simulation.jsit.core;
 import ch.qos.logback.core.*;
 import ch.qos.logback.classic.*;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.util.ContextInitializer;
 import ch.qos.logback.core.encoder.*;
+import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.sift.*;
 
 import org.slf4j.*;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;        // To resolve ambiguity with Logback Logger
 import java.text.SimpleDateFormat;
 import java.text.DecimalFormat;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 import com.thoughtworks.xstream.XStream;
@@ -130,7 +133,7 @@ public abstract class ModelInitialiser {
 
     // Model initialisers per run ID (in thread-safe Hashtable)
     private static final Hashtable<String, ModelInitialiser> perRunInitialisers
-    = new Hashtable<String, ModelInitialiser>();
+    							= new Hashtable<String, ModelInitialiser>();
 
     // Whether first run in an experiment (and thus environment needs setting up)
     // Updated and read in a synchronised block
@@ -195,7 +198,28 @@ public abstract class ModelInitialiser {
         return perRunInitialisers.get(runID);
 
     }
-
+    
+    /**
+     * Utility method to get the current JRE major version number.
+     * @since 0.2
+     * @return The major version number.
+     */
+    public static int getJRE_MajorVersionNumber() {
+    	
+    	String verString = System.getProperty("java.version");
+    	int majorVerNumber = 9;		// Assume Java 9 for now
+    	
+    	try {
+    		majorVerNumber = Integer.valueOf(verString.split("\\.")[0]);  // Escape the dot in the regexp
+    	} catch (NumberFormatException e) {
+    		logger.warn("Unexpected format Java version string " + verString
+    					+ "; arbitrarily assuming this is Java 9");
+    		// Swallow the exception
+    	}
+    	
+    	return majorVerNumber;
+    		
+    }
 
     // ********************** Static Member Classes ************************************
 
@@ -258,6 +282,9 @@ public abstract class ModelInitialiser {
 
     private final String experimentName;
     protected final MainModel modelMain;
+    
+    // Logback context (never changes for a given model instance)
+    private LoggerContext logbackContext;
 
     // Per-run framework-specific sampler created by subclass
     private Sampler sampler;
@@ -290,9 +317,13 @@ public abstract class ModelInitialiser {
      * @param modelMain
      *            The MainModel instance that is the 'root' object for the
      *            model.
+     * @param slf4jBoundToLogback
+     * 			  Whether SLF4J is bound to Logback or not. (If not, we need to
+     * 			  explicitly initialise Logback ourselves; see later comments.)
      */
     public ModelInitialiser(String experimentName,
-                            MainModel modelMain) {
+                            MainModel modelMain,
+                            boolean slf4jBoundToLogback) {
         
         this.modelStartTime = System.currentTimeMillis();
         if (modelMain == null || experimentName == null || experimentName.trim().equals("")) {
@@ -323,7 +354,7 @@ public abstract class ModelInitialiser {
                                + " must exist and be readable");
         }
         
-        initialiseEnvironment();   // Initialise logging
+        initialiseEnvironment(slf4jBoundToLogback);   // Initialise logging
         loadStochSettings();       // Load settings from stoch control file (if exists)
         
         // Store this initialiser for access by embedding/superclasses       
@@ -403,6 +434,16 @@ public abstract class ModelInitialiser {
         return modelMain.getOutputsBasePath() + "/" + runID;
 
     }
+    
+    /**
+     * Get the Logback context for this model.
+     * @return The context
+     */
+    public LoggerContext getLogbackContext() {
+    	
+    	return logbackContext;
+    	
+    }
 
     /**
      * Save model settings to a file in the output folder. This sets up the XStream
@@ -469,7 +510,7 @@ public abstract class ModelInitialiser {
      */
     public void finaliseStochRegistrations() {
         
-        if (settingsWriter == null) {   // Either already done or called too early in model init
+        if (settingsWriter == null) {   // Already done, not writing settings or called too early in model init
             return;     // Will still get done at model end if not done previously
         }
         
@@ -620,6 +661,22 @@ public abstract class ModelInitialiser {
         return sampler;
 
     }
+    
+    /**
+     * Disable stochastic overrides (as provided by the stochasticity control file).
+     * Must be called before registering any stochastic items to be effective.
+     * 
+     * This allows JSIT users to return a stochasticity control file (used, for 
+     * example, during testing) but not actually have it used in a 'normal' run.
+     * 
+     * @since 0.2
+     */
+    public void disableStochOverrides() {
+    	
+    	stochSettings = null;
+    	logger.info("Disabling any previously set up stochastic overrides by user request");
+    	
+    }
 
     
     // ******************** Protected/Package-Access Instance Methods ******************
@@ -644,7 +701,7 @@ public abstract class ModelInitialiser {
      * New model run: recalculate all keys, set up logging for this run and, if first run of
      * an experiment, set up the AnyLogic environment
      */
-    private void initialiseEnvironment() {
+    private void initialiseEnvironment(boolean slf4jBoundToLogback) {
 
         synchronized(ModelInitialiser.class) {            // Ensure parallel runs do this sequentially
             this.runID = EXPERIMENT_START_TIME + "-" + experimentName + "-" + ModelInitialiser.nextRunNumber;
@@ -653,7 +710,7 @@ public abstract class ModelInitialiser {
 
             ModelInitialiser.nextRunNumber++;
             setMDC_Keys();                    // Set the MDC keys from the attributes
-            setUpLogbackLogging(runID);        // Replace encoders for our per-run appenders
+            setUpLogbackLogging(runID, slf4jBoundToLogback);  // Replace encoders for our per-run appenders
 
             logger.info("******** Per-Run Model Setup ***********");
 
@@ -685,19 +742,45 @@ public abstract class ModelInitialiser {
      * NB: Changes to this code may cause untrapped errors which are silently 
      * swallowed by Logback. Turn on the status listener in the Logback conf file to get this information
      */
-    private void setUpLogbackLogging(String runID) {
+    private void setUpLogbackLogging(String runID, boolean slf4jBoundToLogback) {
 
-        ch.qos.logback.classic.Logger currLogger;
-        LoggerContext context;
+        ch.qos.logback.classic.Logger currLogger = null;
         OutputStreamAppender<ILoggingEvent> modelAppender;
 
-        // Initially use the root logger for the AMD code (i.e., the one for the package name
-        // of this class). Explicit package usage in cast to get the Logback Logger instead of the
-        // imported SLF4J one
-
-        currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
-                                                    "uk.ac.soton.simulation.jsit");
-        context = currLogger.getLoggerContext();
+        // Initially use the root logger for JSIT (i.e., the one for the package name
+        // of this class).
+        //
+        // If SLF4J is not bound to Logback, we have to explicitly initialise Logback
+        // using its own classes and get Logger instances via the Logback context. This does
+        // mean that the loggers used by JSIT code (which use LoggerFactory to get loggers) will
+        // be bound to whatever SLF4J is bound to (and not necessarily Logback).
+        //
+        // However, in virtually all cases the user has control over the classpath and so can
+        // ensure that SLF4J is bound to Logback. (One notable exception is in AnyLogic 8 models
+        // where SLF4J is pre-bound to log4j and, when running via the AnyLogic client, the user isn't
+        // able to override the classpath in the way they need to so as to bind it to Logback.)
+        
+        if (slf4jBoundToLogback) {
+        	currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
+                    						"uk.ac.soton.simulation.jsit");
+        	logbackContext = currLogger.getLoggerContext();	
+        } else {
+        	if (ModelInitialiser.isFirstRun) {
+        		logbackContext = new LoggerContext();
+	        	ContextInitializer contextInitializer = new ContextInitializer(logbackContext);
+        	    URL configurationUrl = Thread.currentThread().getContextClassLoader().getResource("logback.xml");
+        	    if (configurationUrl == null) {
+        	        throw new IllegalStateException("Unable to find logback configuration file");
+        	    }
+	        	try {
+	        	    contextInitializer.configureByResource(configurationUrl);       	    
+	        	} catch (JoranException e) {
+	        	    throw new RuntimeException("Unable to explicitly configure Logback", e);
+	        	}
+        	}
+        	
+        	currLogger = logbackContext.getLogger("uk.ac.soton.simulation.jsit");
+        }
 
         modelAppender = (OutputStreamAppender<ILoggingEvent>) (currLogger.getAppender("CONSOLE"));
 
@@ -706,7 +789,7 @@ public abstract class ModelInitialiser {
 
         if (isFirstRun) {                  
             modelAppender.stop();
-            modelAppender.setEncoder(createEncoder(context, LogFormatType.CONSOLE));
+            modelAppender.setEncoder(createEncoder(logbackContext, LogFormatType.CONSOLE));
             modelAppender.start();
         }
         else {
@@ -724,7 +807,7 @@ public abstract class ModelInitialiser {
                 ((SiftingAppenderBase<ILoggingEvent>) currLogger.getAppender("MSGS_RUN_SIFTER"))
                 .getAppenderTracker().getOrCreate(getOutputFilesBasePath(), System.currentTimeMillis());
         modelAppender.stop();
-        modelAppender.setEncoder(createEncoder(context, LogFormatType.DIAGNOSTICS));
+        modelAppender.setEncoder(createEncoder(logbackContext, LogFormatType.DIAGNOSTICS));
         modelAppender.start();
 
         if (logger.isTraceEnabled()) {
@@ -734,8 +817,11 @@ public abstract class ModelInitialiser {
         // Switch to events logger. Explicit package usage to get the Logback Logger instead
         // of the imported SLF4J one
 
-        currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EVENT_LOGGER_NAME);
-        context = currLogger.getLoggerContext();
+        if (slf4jBoundToLogback) {
+        	currLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EVENT_LOGGER_NAME);
+        } else {
+        	currLogger = logbackContext.getLogger(EVENT_LOGGER_NAME);
+        }
 
         // Trigger events log appender addition and replace the encoder. The appender
         // in question has an ID equal to the per-run output folder path
@@ -746,7 +832,7 @@ public abstract class ModelInitialiser {
                 ((SiftingAppenderBase<ILoggingEvent>) currLogger.getAppender("EVENTS_RUN_SIFTER"))
                 .getAppenderTracker().getOrCreate(getOutputFilesBasePath(), System.currentTimeMillis());
         modelAppender.stop();
-        modelAppender.setEncoder(createEncoder(context, LogFormatType.EVENTS));
+        modelAppender.setEncoder(createEncoder(logbackContext, LogFormatType.EVENTS));
         modelAppender.start();
 
         if (logger.isTraceEnabled()) {
