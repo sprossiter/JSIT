@@ -39,10 +39,19 @@ public class EventManager {
     private final Logger eventsLogger;
     private final Logger diagnosticsLogger;
 
+    // Data structures for enum-based events, covering general handlers (receivers receiving all
+    // messages from a source class) and source-specific ones (receivers receiving all messages
+    // only from specific source objects).
     private final Map<Class<?>, LinkedList<EventReceiver>> generalHandlers
     					= new HashMap<Class<?>, LinkedList<EventReceiver>>();
     private final Map<EventSource<?>, LinkedList<EventReceiver>> sourceSpecificHandlers
     					= new HashMap<EventSource<?>, LinkedList<EventReceiver>>();
+    
+    // Data structure for event message subscriptions. Maps the message class to a map of receivers to
+	// a list of specific source objects. (If this list is null, that signifies that this receiver receives
+	// messages of that class from any source object.)
+	private final Map<Class<?>, Map<EventMessageReceiver<?>, List<EventMessageSource>>> eventMsgSubscriptionsMap
+				= new HashMap<Class<?>, Map<EventMessageReceiver<?>, List<EventMessageSource>>>();
 
     @Deprecated
     /**
@@ -73,7 +82,17 @@ public class EventManager {
     									EventManager.class);
     	
     }
+    
+    /* ------------------------- ENUM-BASED EVENTS --------------------------------- */
 
+    /**
+     * Register (subscribe) a receiver for enum-based events from a given source class
+     * (i.e., from all instances of that class).
+     * @since 0.1
+     * 
+     * @param sourceClass The source class.
+     * @param receiver The receiver for the events.
+     */
     public void register(Class<?> sourceClass, EventReceiver receiver) {
 
         LinkedList<EventReceiver> classReceivers = generalHandlers.get(sourceClass);
@@ -90,6 +109,13 @@ public class EventManager {
 
     }
 
+    /**
+     * Register (subscribe) a receiver for enum-based events from a given source object.
+     * @since 0.1
+     * 
+     * @param eventSource The source object.
+     * @param receiver The receiver for the events.
+     */
     public void register(EventSource<?> eventSource, EventReceiver receiver) {
 
         LinkedList<EventReceiver> sourceReceivers = sourceSpecificHandlers.get(eventSource);
@@ -106,10 +132,15 @@ public class EventManager {
 
     }
 
-    /*
-     * Publish an event from an EventSource. We call source-instance-specific handlers
+    /**
+     * Publish an enum-based event from an EventSource. We call source-instance-specific handlers
      * first (in order of registration) and then source-class-specific ones. (It makes
      * sense that more 'targetted' handlers run first.)
+     * 
+     * @since 0.1
+     * 
+     * @param source The source object.
+     * @param eventsLogMsg Log message for the events log. (Nothing will be logged if null.) 
      */
     public void publish(EventSource<?> source, String eventsLogMsg) {
 
@@ -180,5 +211,101 @@ public class EventManager {
         }
 
     }
+    
+    /* ------------------------- MESSAGE-BASED EVENTS --------------------------------- */
+    
+	/**
+	 * Register (subscribe) to receive all message events for a particular message class.
+	 * 
+	 * @since 0.2
+	 * 
+	 * @param messageClass The class of the message.
+	 * @param receiver The receiver for the messages.
+	 * 
+	 * This will override any previous source-specific subscriptions.
+	 */
+	public void register(Class<?> messageClass, EventMessageReceiver<?> receiver) {
+		
+		register(messageClass, null, receiver);
+		
+	}
+	
+	/**
+	 * Register (subscribe) to receive all message events for a particular message class and a particular source object.
+	 * 
+	 * @since 0.2
+	 * 
+	 * @param messageClass The class of the message.
+	 * @param specificSource The specific source object.
+	 * @param receiver The receiver for the messages.
+	 * 
+	 * This will override any previous subscription for this receiver to receive this message class from all sources.
+	 */
+	public void register(Class<?> messageClass, EventMessageSource specificSource, EventMessageReceiver<?> receiver) {
+		
+		Map<EventMessageReceiver<?>, List<EventMessageSource>> classSubscribersMap = eventMsgSubscriptionsMap.get(messageClass);
+		if (classSubscribersMap == null) {		// First receiver for this message class
+			classSubscribersMap = new HashMap<EventMessageReceiver<?>, List<EventMessageSource>>();
+			
+			eventMsgSubscriptionsMap.put(messageClass, classSubscribersMap);
+		}
+		
+		List<EventMessageSource> specificSources;
+		
+		if (specificSource == null) {
+			specificSources = classSubscribersMap.put(receiver, null);
+			// TODO: WARN if previously non-null value
+			return;
+		}
+				
+		if (classSubscribersMap.containsKey(receiver)) {
+			specificSources = classSubscribersMap.get(receiver);
+			if (specificSources == null) {
+				// TODO: WARN that overwriting receive-all setting
+			}
+		} else {
+			specificSources = new ArrayList<EventMessageSource>();
+			classSubscribersMap.put(receiver, specificSources);
+		}
+		
+		specificSources.add(specificSource);
+		
+	}
+	
+	/**
+	 * Publish a particular message event (which will be passed on to any subscribers via their EventMessageReceiver interface).
+	 * 
+	 * @since 0.2
+	 * 
+	 * @param msg The message.
+	 * @param source The message source.
+	 * @param logMessage Whether to log the message as well. (The message's toString() method
+	 * 					 provides the logged version of the message.)
+	 */
+	public void publish(Object msg,
+						EventMessageSource source,
+						boolean logMessage) {
+		
+		// Log the event in the special logger if requested. The Logback configuration
+		// ensures the event message is also included in the diagnostics log
+        if (logMessage) {
+            eventsLogger.info(msg.toString());
+        }
+        
+		Map<EventMessageReceiver<?>, List<EventMessageSource>> classSubscribersMap
+							= eventMsgSubscriptionsMap.get(msg.getClass());
+		
+		if (classSubscribersMap == null) {
+			return;
+		}
+		
+		for (EventMessageReceiver<?> r : classSubscribersMap.keySet()) {
+			List<EventMessageSource> specificSources = classSubscribersMap.get(r);
+			if (specificSources == null || specificSources.contains(source)) {
+				r.process(msg.getClass().cast(msg));
+			}
+		}
+	
+	}
 
 }
