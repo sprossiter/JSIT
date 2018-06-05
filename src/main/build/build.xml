@@ -51,7 +51,7 @@
 
     <!-- General build variables -->
 
-    <property name="jsit.ver" value="0.2-SNAPSHOT" />
+    <property name="jsit.ver" value="0.2" />
     <property name="build.area.dist" value="buildOutputs/dist/JSIT-${jsit.ver}" />
     <property name="build.area.ghpages" value="buildOutputs/gh-pages/JSIT-${jsit.ver}" />
 

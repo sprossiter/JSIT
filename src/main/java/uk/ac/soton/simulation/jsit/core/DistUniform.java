@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -58,7 +58,12 @@ public class DistUniform extends DistributionContinuous implements Serializable 
     // ************************** Constructors ****************************************
 
     /**
-     * Default constructor
+     * Default constructor.
+     * 
+     * @since 0.1
+     * 
+     * @param min The minimum sampled value.
+     * @param max The maximum sampled value.
      */
     public DistUniform(double min, double max) {
 
@@ -71,30 +76,66 @@ public class DistUniform extends DistributionContinuous implements Serializable 
 
     // ************************** Public Methods **************************************
 
+    /**
+     * Set (change) the distribution's minimum.
+     * 
+     * @since 0.1
+     * 
+     * @param min The minimum value to use.
+     */
     public void setMin(double min) {
 
         this.min = min;
 
     }
 
+    /**
+     * Get the distribution's minimum.
+     * 
+     * @since 0.1
+     * 
+     * @return The minimum.
+     */
     public double getMin() {
 
         return min;
 
     }
 
+    /**
+     * Set (change) the distribution's maximum.
+     * 
+     * @since 0.1
+     * 
+     * @param max The maximum value to use.
+     */
     public void setMax(double max) {
 
         this.max = max;
 
     }
 
+    /**
+     * Get the distribution's maximum.
+     * 
+     * @since 0.1
+     * 
+     * @return The maximum.
+     */
     public double getMax() {
 
         return max;
 
     }
 
+    /**
+     * Custom toString implementation.
+     * 
+     * @since 0.1
+     * 
+     * @return A string representation of the distribution;
+     * e.g., <code>"U(3.0, 4.0)"</code>.
+     */
     @Override
     public String toString() {
 
@@ -104,7 +145,10 @@ public class DistUniform extends DistributionContinuous implements Serializable 
 
     /**
      * Create an unregistered copy of this distribution.
+     * 
      * @since 0.2
+     * 
+     * @return The copy of this distribution.
      */
     @Override
     public Distribution createUnregisteredCopy() {

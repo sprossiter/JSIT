@@ -163,7 +163,9 @@ public abstract class ModelInitialiser {
 
     /**
      * Exposed for technical reasons; not intended for JSIT user use.
+     * 
      * @since 0.1
+     * 
      * @param modelMain The MainModel instance that is checking for an existing initialiser.
      * @return The existing ModelInitialiser (produced by another MainModel) or null if
      * there is no existing one.
@@ -201,7 +203,9 @@ public abstract class ModelInitialiser {
     
     /**
      * Utility method to get the current JRE major version number.
+     * 
      * @since 0.2
+     * 
      * @return The major version number.
      */
     public static int getJRE_MajorVersionNumber() {
@@ -311,6 +315,7 @@ public abstract class ModelInitialiser {
      * Constructor.
      * 
      * @since 0.1
+     * 
      * @param experimentName
      *            A string defining the experiment (set of related runs) this
      *            model instance is part of. (Used to derive the JSIT run ID.)
@@ -372,6 +377,8 @@ public abstract class ModelInitialiser {
      * <p>
      * JSIT users may want to call this themselves if there are instances where their
      * model can switch threads for a run (to one that is not a child of the previous one).
+     * 
+     * @since 0.2
      */
     public void possibleMDC_KeysLoss() {
 
@@ -395,7 +402,12 @@ public abstract class ModelInitialiser {
      * may have multiple MainModel instances and only one initiates the JSIT environment,
      * typically the first instantiated).
      * <p>
-     * This is primarily used internally (and exposed for technical reasons). 
+     * This is primarily used internally (and exposed for technical reasons).
+     * 
+     * @since 0.1
+     * 
+     * @param modelMain The MainModel interface to check.
+     * @return Whether the MainModel provided is the model initiator.
      */
     public boolean isModelInitiator(MainModel modelMain) {
         
@@ -406,6 +418,10 @@ public abstract class ModelInitialiser {
       
     /**
      * Get elapsed model processing time in seconds.
+     * 
+     * @since 0.1
+     * 
+     * @return Elapsed processing time rounded to 2 d.p. (as a String).
      */
     public String getElapsedTimeSecs() {
 
@@ -418,6 +434,10 @@ public abstract class ModelInitialiser {
 
     /**
      * Get the JSIT-derived run ID (as used in output folder names).
+     * 
+     * @since 0.1
+     * 
+     * @return The unique run ID.
      */
     public String getRunID() {
 
@@ -428,6 +448,10 @@ public abstract class ModelInitialiser {
     /**
      * Get the base path for this run's output files. User subclasses (when not using a helper
      * library) may want to override this.
+     * 
+     * @since 0.1
+     * 
+     * @return The output files base path (as a String).
      */
     public String getOutputFilesBasePath() {
 
@@ -437,6 +461,9 @@ public abstract class ModelInitialiser {
     
     /**
      * Get the Logback context for this model.
+     * 
+     * @since 0.2
+     * 
      * @return The context
      */
     public LoggerContext getLogbackContext() {
@@ -452,6 +479,9 @@ public abstract class ModelInitialiser {
      * <p>
      * JSIT users will only need to call this manually if not using a helper library.
      * 
+     * @since 0.1
+     * 
+     * @throws IOException if there are problems creating/writing the output file.
      */
     public void saveModelSettings() throws IOException {
 
@@ -507,6 +537,8 @@ public abstract class ModelInitialiser {
      * <p>
      * This will be called as part of the main model destroy processing (onMainModelDestroy
      * method) if the user does not call it earlier.
+     * 
+     * @since 0.1
      */
     public void finaliseStochRegistrations() {
         
@@ -573,6 +605,8 @@ public abstract class ModelInitialiser {
     
     /**
      * Call this when the MainModel is destroyed to clean up statically-held storage for the run.
+     * 
+     * @since 0.1
      */
     public void onMainModelDestroy() {
     
@@ -611,6 +645,7 @@ public abstract class ModelInitialiser {
      * can register itself and the sampler in the stoch item.
      * 
      * @since 0.2
+     * 
      * @param stochItem The stochastic item to register.
      * @return The relevant Sampler for that stochastic item to use.
      */

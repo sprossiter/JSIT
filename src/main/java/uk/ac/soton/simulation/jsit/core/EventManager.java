@@ -28,7 +28,23 @@ import org.slf4j.LoggerFactory;
  * Simple manager for publish/subscribe events (a flavour of the Observer design
  * pattern). Published events can also optionally be logged to a special events
  * logger which allows, for example, a 'narrative' type file of real-world-domain-
- * meaningful events to be kept
+ * meaningful events to be kept.
+ * 
+ * This allows for two alternative architectures to be used (which can be freely mixed if desired):
+ * <dl>
+ * <dt>Marker-Based Events</dt>
+ * <dd>The receivers just receive a 'marker' that an event has occurred (with useful human-readable
+ * detail in a log message), and then query the event source object to get the
+ * information they need (requiring those objects/agents to have the relevant information available,
+ * and the caller to know about these model classes). The markers are implemented as the event sources
+ * providing an source-class-specific enum and a method returning the enum that indicates the event
+ * alternative that just occurred. (A given model class may generate any number of alternative events.)</dd>
+ * <dt>Message-Class Events</dt>
+ * <dd>Have messages (objects of event-source-specific message classes) sent to receivers which may
+ * contain either all required information (this isolating receivers from anything other than the message
+ * classes), and/or contain references to model classes (or informational interfaces for them) to obtain
+ * further information.</dd>
+ * </dl>
  * 
  * @author Stuart Rossiter
  * @since 0.1
@@ -83,10 +99,10 @@ public class EventManager {
     	
     }
     
-    /* ------------------------- ENUM-BASED EVENTS --------------------------------- */
+    /* ------------------------- MARKER-BASED EVENTS --------------------------------- */
 
     /**
-     * Register (subscribe) a receiver for enum-based events from a given source class
+     * Register (subscribe) a receiver for marker-based events from a given source class
      * (i.e., from all instances of that class).
      * @since 0.1
      * 
@@ -110,7 +126,7 @@ public class EventManager {
     }
 
     /**
-     * Register (subscribe) a receiver for enum-based events from a given source object.
+     * Register (subscribe) a receiver for marker-based events from a given source object.
      * @since 0.1
      * 
      * @param eventSource The source object.
@@ -133,9 +149,9 @@ public class EventManager {
     }
 
     /**
-     * Publish an enum-based event from an EventSource. We call source-instance-specific handlers
+     * Publish a marker-based event from an EventSource. We call source-instance-specific handlers
      * first (in order of registration) and then source-class-specific ones. (It makes
-     * sense that more 'targetted' handlers run first.)
+     * sense that more 'targeted' handlers run first.)
      * 
      * @since 0.1
      * 
@@ -169,9 +185,14 @@ public class EventManager {
 
     }
 
-    /*
-     * Deregister receiver for a domain event source class. Warning if not
-     * currently registered
+    /**
+     * Deregister receiver for marker-based events from a source class. Warning if not
+     * currently registered.
+     * 
+     * @since 0.1
+     * 
+     * @param sourceClass The source class.
+     * @param receiver The receiver to deregister.
      */
     public void deregister(Class<?> sourceClass, EventReceiver receiver) {
 
@@ -192,6 +213,15 @@ public class EventManager {
 
     }
 
+    /**
+     * Deregister receiver for marker-based events from a source object. Warning if not
+     * currently registered.
+     * 
+     * @since 0.1
+     * 
+     * @param source The source object.
+     * @param receiver The receiver to deregister.
+     */
     public void deregister(EventSource<?> source, EventReceiver receiver) {
 
         boolean wasRegistered;
@@ -212,10 +242,10 @@ public class EventManager {
 
     }
     
-    /* ------------------------- MESSAGE-BASED EVENTS --------------------------------- */
+    /* ------------------------- MESSAGE-CLASS EVENTS --------------------------------- */
     
 	/**
-	 * Register (subscribe) to receive all message events for a particular message class.
+	 * Register (subscribe) to receive all event message objects for a particular source class.
 	 * 
 	 * @since 0.2
 	 * 
@@ -231,7 +261,8 @@ public class EventManager {
 	}
 	
 	/**
-	 * Register (subscribe) to receive all message events for a particular message class and a particular source object.
+	 * Register (subscribe) to receive all event message objects for a particular source class
+	 * and a particular source object.
 	 * 
 	 * @since 0.2
 	 * 
@@ -239,7 +270,8 @@ public class EventManager {
 	 * @param specificSource The specific source object.
 	 * @param receiver The receiver for the messages.
 	 * 
-	 * This will override any previous subscription for this receiver to receive this message class from all sources.
+	 * This will override any previous subscription for this receiver to receive event message objects
+	 * from all source class instances.
 	 */
 	public void register(Class<?> messageClass, EventMessageSource specificSource, EventMessageReceiver<?> receiver) {
 		
@@ -273,7 +305,8 @@ public class EventManager {
 	}
 	
 	/**
-	 * Publish a particular message event (which will be passed on to any subscribers via their EventMessageReceiver interface).
+	 * Publish a particular event message object (which will be passed on to any subscribers
+	 * via their EventMessageReceiver interface).
 	 * 
 	 * @since 0.2
 	 * 

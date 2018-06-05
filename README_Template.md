@@ -22,7 +22,8 @@ below). JSIT source code is stored on GitHub at
 [https://github.com/sprossiter/JSIT](https://github.com/sprossiter/JSIT).
 
 For further information on using JSIT and how it works, see the [User
-Guide](@USER_GUIDE_PATH@).
+Guide](@USER_GUIDE_PATH@). There is also a [JSIT change
+history](changeHistory.md).
 
 ## Licensing
 
@@ -33,7 +34,7 @@ permission statement as below. (See the full [LGPL license](lgpl.txt) and [GPL
 license](gpl.txt) for more details.)
 
 ```
-        Copyright Stuart Rossiter, University of Southampton 2018
+        Copyright 2018 University of Southampton, Stuart Rossiter
         
         JSIT is free software: you can redistribute it and/or modify it under the terms
         of the GNU Lesser General Public License as published by the Free Software
@@ -50,7 +51,7 @@ license](gpl.txt) for more details.)
 
 ## Dependencies
 
-JSIT requires Java 1.6+. It uses the following third-party libraries with
+JSIT requires Java 6+. It uses the following third-party libraries with
 LGPL-compatible licenses (nested items show dependencies of the primary
 dependencies):
 
@@ -73,6 +74,8 @@ dependencies):
     - [Apache Commons Lang 2.x](http://commons.apache.org/proper/commons-lang)
   
     - [Apache Commons Logging](http://commons.apache.org/proper/commons-logging)
+  
+  * [Apache Commons Math](http://commons.apache.org/proper/commons-math)
   
   * [Apache Subversion](https://subversion.apache.org/) JavaHL (Java binding for SVN)
 

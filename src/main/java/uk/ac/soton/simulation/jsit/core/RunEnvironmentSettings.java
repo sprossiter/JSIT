@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -77,7 +77,11 @@ public class RunEnvironmentSettings {
     // ************************** Constructors *****************************************
 
     /**
-     * Create a settings instance, auto-populated with information.
+     * Constructor: create a settings instance, auto-populated with information.
+     * 
+     * @since 0.1
+     * 
+     * @param modelMain The MainModel instance for the model.
      */
     public RunEnvironmentSettings(MainModel modelMain) {
 
