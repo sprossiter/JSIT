@@ -3,7 +3,7 @@
     Author: Stuart Rossiter
 	
     ****************************************************************************	
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
 	
     This file is part of JSIT.
 
@@ -35,15 +35,9 @@
 <h1>Java Simulation Infrastructure Toolkit (JSIT): User Guide</h1>
 <p class="subHeading"><b>JSIT Version: </b>0.2
 <br />
-<b>Last Updated: </b>31st March 2015</p>
+<b>Last Updated: </b>5th June 2018</p>
 
 <h2>Contents</h2>
-
-<div class="warning"><b>This current documentation is still a little preliminary
-for the stochasticity control and domain events sections, although the code in
-the example models should provide a lot of helpful detail. It will be enhanced
-as soon as time allows (at the same time as improving the rather-bare Javadoc
-for the code).</b></div>
 
 <ul>
 <li><a href="#intro">Introduction</a></li>
@@ -67,6 +61,12 @@ for the code).</b></div>
 <li><a href="#loggingNormal">Standard Process</a></li>
 <li><a href="#loggingAnyLogic">AnyLogic Process</a></li>
 </ul>
+<li><a href="#stochControl">Test-Oriented Stochasticity Control</a></li>
+<ul>
+<li><a href="#stochControlNormal">Standard Process</a></li>
+<li><a href="#stochControlAnyLogic">AnyLogic Process</a></li>
+</ul>
+<li><a href="#domainEvents">Domain Events &amp; Event-Driven Separation</a></li>
 <li><a href="#repro">Run Reproducibility</a></li>
 <ul>
 <li><a href="#reproAnyLogic">AnyLogic (via helper library)</a></li>
@@ -76,13 +76,6 @@ for the code).</b></div>
 <ul>
 <li><a href="#vcNoVCS">No Version Control System (model 'checkpointing')</li>
 <li><a href="#vcSVN">Subversion</li>
-</ul>
-<li><a href="#stochControl">Test-Oriented Stochasticity Control</a></li>
-<ul>
-<li><a href="#stochControlNormal">Standard Process</a></li>
-<li><a href="#stochControlAnyLogic">AnyLogic Process</a></li>
-</ul>
-<li><a href="#domainEvents">Domain Events &amp; Event-Driven Separation</a></li>
 </ul>
 <li><a href="#javaRef">Java Class Reference</a></li>
 </ul></p>
@@ -95,16 +88,13 @@ for the code).</b></div>
 <h2 id="intro">Introduction</h2>
 
 <p>The Java Simulation Infrastructure Toolkit (JSIT) is a set of Java libraries
-which consistently add a set of useful 'infrastructural' features for
+which adds a set of useful 'infrastructural' features for
 simulation:
 
 <ul>
 
 <li>advanced <span class="term">logging</span> with switchable levels per model
 components and separation of outputs per run;</li>
-
-<li>support for <span class="term">reproducible simulation runs</span> and thus
-results provenance;</li>
 
 <li>the ability to <span class="term">control the stochasticity in the
 model</span> external to the model code (plus providing a standardised interface
@@ -113,7 +103,10 @@ useful for model <em>testing</em>;</li>
 
 <li>a <span class="term">publish-subscribe events architecture</span> which
 allows for model components to be more easily de-coupled from each other
-(especially useful when separating model from model visualisation).</li>
+(especially useful when separating model from model visualisation);</li>
+
+<li>some support for <span class="term">reproducible simulation runs</span>
+and thus results provenance.</li>
 
 </ul>
 
@@ -148,19 +141,20 @@ framework.) <em>Currently, a helper library is only available for AnyLogic</em>,
 though there is an <a href="#exampleModels">example model</a> which shows one
 way to do a raw integration for a MASON-based model.</p>
 
-<p>The following academic journal paper gives much more detail on the rationale
-for JSIT and why modellers might want to use the features above (as well as the
+<p>There is an <a href="http://jasss.soc.surrey.ac.uk/18/3/9.html">open-access
+academic journal paper</a> which gives much more detail on the rationale for
+JSIT and why modellers might want to use the features above (as well as the
 wider picture of best-practice software engineering principles for simulation,
-and why the helper library focus was on AnyLogic):
+and why the helper library focus was on AnyLogic).
+
+<em>Please cite this paper (using the citation below) when using JSIT for any
+models that are included in your own academic papers.</em></p>
 
 <blockquote>
-Rossiter, S. (Forthcoming). Simulation Design: Trans-Paradigm Best-Practice from
+Rossiter, S. (2015). Simulation Design: Trans-Paradigm Best-Practice from
 Software Engineering. <em>Journal of Artificial Societies &amp; Social
 Simulations (JASSS)</em>.
 </blockquote>
-
-<em>Please cite this paper when using JSIT for any models that are included in
-your own academic papers.</em></p>
 
 <div class="topLink"><a href="#">Top</a></div><br /><hr />
 
@@ -190,37 +184,6 @@ parallelised runs in the same JVM (which AnyLogic supports).</li>
 
 <li>Automatic logging (in the timestamped outputs folder) of any published
 domain events in a separate events log file.</li>
-
-</ul>
-
-<p><b>Run Reproducibility</b></p>
-
-<ul>
-
-<div class="sideNote">Ideally these run settings would also allow you to
-<em>automatically</em> recreate a model run, but that is much more sophisticated
-functionality that may be explored in future.</div>
-
-<li>Automatic creation of a run settings file (in XML) which contains
-information that allows you to recreate runs. This includes all model parameter
-settings, provenance for the model code (in terms of its version-control system
-(VCS) location) and environmental information (e.g., version of Java).</li>
-
-<li>Ability for the user to define a model name and version which is reported in
-outputs.</li>
-
-<li>Run-time checks as to whether the model code being run has been altered from
-anything checked-out or exported from a VCS (which would mean
-that you might not be able to exactly reproduce this run since the code run is
-not stored and referenceable via the VCS).</li>
-
-<div class="sideNote">Currently only <a
-href="http://subversion.apache.org/">Subversion</a> is supported as a VCS,
-though there is also a way to 'checkpoint' a model's code without using a
-VCS.</div>
-
-<li>A JSIT-tooled VCS commit process which maintains the meta-data needed to
-support the functionality above.</li>
 
 </ul>
 
@@ -261,13 +224,6 @@ stochasticity' in particular areas for that run).</li>
 
 <ul>
 
-<div class="sideNote">This is currently supported in a simple way where
-event-specific data is <em>not</em> included with the event (other than in an
-event message string). It is the responsibility of the receiver to query the
-event source for any information it needs, and thus the source needs to be
-designed to make the appropriate information available. This does have some
-intrinsic benefits (as well as drawbacks).</div>
-
 <li>Define model events that have meaning in the domain being modelled (I call
 these <span class="term">domain events</span>) and have these automatically
 logged to provide a model narrative.</li>
@@ -276,12 +232,68 @@ logged to provide a model narrative.</li>
 possibility (where receivers 'check their mail' as they need to; a pull
 architecture, rather than a push one), but is not currently implemented.</div>
 
-</li>Have model components subscribe to events published by a model component
-(either one or all instances of it) and receive notification synchronously when
-the event occurs. This allows for models to be designed in a nicely decoupled
+<li>Allow for two alternative architectures (which can be freely mixed if
+desired) which allow receivers (event subscribers) to receive information on
+model events which have occurred:
+
+<dl>
+<dt>Marker-Based Events</dt>
+
+<dd>The receivers just receive a 'marker' that an event has occurred (with
+useful human-readable detail in a log message), and then query the event source
+object to get the information they need (requiring those objects/agents to have
+the relevant information available, and the caller to know about these model
+classes). The markers are implemented as the event sources providing an
+source-class-specific enum and a method returning the enum that indicates the
+event alternative that just occurred. (A given model class may generate any
+number of alternative events.)</dd>
+
+<dt>Message-Class Events</dt>
+
+<dd>Have messages (objects of event-source-specific message classes) sent to
+receivers which may contain either all required information (this isolating
+receivers from anything other than the message classes), and/or contain
+references to model classes (or informational interfaces for them) to obtain
+further information.</dd>
+
+</dl>
+
+</li>
+</ul>
+
+This allows for models to be designed in a nicely decoupled
 way, and is particularly useful when visualisation components need to update to
 reflect these events. (As a general design principle, model components should
-<em>not</em> be explicitly 'aware' of what is visualising them.)</li>
+<em>not</em> be explicitly 'aware' of what is visualising them.)
+
+<p><b>Run Reproducibility</b></p>
+
+<ul>
+
+<div class="sideNote">Ideally these run settings would also allow you to
+<em>automatically</em> recreate a model run, but that is much more sophisticated
+functionality that may be explored in future.</div>
+
+<li>Automatic creation of a run settings file (in XML) which contains
+information that allows you to recreate runs. This includes all model parameter
+settings, provenance for the model code (in terms of its version-control system
+(VCS) location) and environmental information (e.g., version of Java).</li>
+
+<li>Ability for the user to define a model name and version which is reported in
+outputs.</li>
+
+<li>Run-time checks as to whether the model code being run has been altered from
+anything checked-out or exported from a VCS (which would mean
+that you might not be able to exactly reproduce this run since the code run is
+not stored and referenceable via the VCS).</li>
+
+<div class="sideNote">Currently only <a
+href="http://subversion.apache.org/">Subversion</a> is supported as a VCS,
+though there is also a way to 'checkpoint' a model's code without using a
+VCS.</div>
+
+<li>A JSIT-tooled VCS commit process which maintains the meta-data needed to
+support the functionality above.</li>
 
 </ul>
 
@@ -937,6 +949,7 @@ ModelX
             commons-io-2.4.jar
             commons-lang-2.6.jar
             commons-logging-1.2.jar
+            commons-math3-3.6.1.jar
             jsit-anylogic-0.2.jar
             jsit-core-0.2.jar
             logback-classic-1.1.2.jar
@@ -1141,7 +1154,7 @@ separate out the AnyLogic loggers that runs 1-3 use.</p>
 
 <li>If your classes (AnyLogic Agents or otherwise) only ever have one instance
 (they are singleton classes), you can include an <code>AnyLogicLogger</code>
-directly in that instance at startup time:
+variable directly in that instance, set up in agent startup code:
 
 <pre>
 logger = AnyLogicLoggerAccessor.getAccessorFreeAnyLogicLogger(
@@ -1197,13 +1210,151 @@ import uk.ac.soton.simulation.jsit.anylogic.*;
 
 <!-- *************************************************************************** -->
 
+<h3 id="stochControl">Test-Oriented Stochasticity Control</h3>
+
+<p>Each stochastic item in your simulation (e.g., a normal distribution or
+simple Bernoulli trial probability) is specified as an instance of a JSIT
+<code>AbstractStochasticItem</code> subclass. Typically all instances of a model
+component (for the same model run) will share an instance, though there may be
+cases where you want per-instance distributions. The actual runtime sampling is
+still done by the toolkit you are using; by using the JSIT 'wrappers', you gain
+a consistent API and, more importantly, the ability to collapse selected items
+to a single 'mid' value (typically the mean) for a run, which makes testing and
+model exploration significantly easier in many cases.</p>
+
+<p>The runtime control is done by supplying a <span class="term">stochasticity
+control file</span> in your inputs directory called
+<code>stochControl.properties</code>. A template is provided in the
+<code>config</code> directory of the JSIT distribution (with comments there
+detailing the format).</p>
+
+<p><b>NB</b>: <code>ModelInitialiser</code> has a
+<code>disableStochOverrides</code> method which can be called to disable use of
+the stochasticity control file (if one exists). This allows JSIT users to set up
+a stochasticity control file (used, for example, during testing) but not
+actually have it used in a 'normal' run (by having such runs call this method at
+model startup).</p>
+
+<p>Because some simulations may have multiple model runs in parallel (within the
+same JVM) this means that we <em>cannot</em> always assume that all instances of
+a model component (Java class) are part of the same model. Thus, stochastic
+items can be registered per-model-instance and stored/accessed via a <span
+class="term">stochastic accessor</span> (in a very similar way to how logging
+works for AnyLogic; see earlier). For the same reasons as with logging, AnyLogic
+models should use a different form of accessor to non-AnyLogic models.</p>
+
+<p>As well as standard distributions, JSIT also provides some useful classes for
+custom distributions and 'distribution lookups': a set of distributions (of the
+same type) keyed by a set of Java enumerations. The latter can be used, for
+example, to represent a lookup of death rates (Bernoulli distributions) by
+age-range and gender classifications.</p>
+
+<h4 id="stochControlNormal">Standard Process</h4>
+
+<p>Have a look at the <a
+href="https://github.com/sprossiter/JSIT_DemoMASON">MASON-based demo
+model</code></a>.</p>
+
+<h4 id=stochControlAnyLogic">AnyLogic Process</h4>
+
+<p>Have a look at the <a
+href="https://sourceforge.net/p/amdhealthsocialcaresim/">AnyLogic-based demo
+model</code></a>.</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr />
+
+<!-- *************************************************************************** -->
+
+<h3 id="domainEvents">Domain Events &amp; Event-Driven Separation</h3>
+
+<p>Models that want to use JSIT events should create an instance of
+<code>EventManager</code> from the JSIT core library. Model components should
+implement the JSIT <code>EventSource</code> interface if they produce JSIT
+events, and the <code>EventReceiver</code> interface if they receive them. (They
+can do both.)</p>
+
+<p>Components that want to receive events also need to register with the
+<code>EventManager</code> for the events they are interested in. There are two
+<code>register</code> methods: one to register for all events from a class
+(i.e., from all instances), where you pass the <code>Class</code> of the source;
+and one to register for events from a particular class instance, where you pass
+the specific <code>EventSource</code> instance.</p>
+
+<p>All domain events will be logged to a special events log file
+<code>modelEvents.log</code> per run (in the JSIT-specified output folder).</p>
+
+<h4 id="domainEventsMarker">Marker-Based Events</h4>
+
+<p>The basic relationships between classes is shown in figure 4 below:</p>
+
+<img src="diagrams/eventsArchitectureMarker.png"></img>
+
+<p><b>Figure 4</b>: <em>Overview of JSIT domain events architecture for
+marker-based events, as a UML class diagram.</em></p>
+
+<p>Event source classes should define an enum (which specifies the alternative
+events that this class can produce) and then implement the
+appropriately-parameterised <code>EventSource</code> interface. Whenever they
+create an event, they should call the <code>publish</code> method on the event
+manager (providing an optional log message for the event).</p>
+
+<p>Event receivers should implement the <code>EventReceiver</code> interface and
+register with the event manager for the events they want to subscribe to (either
+for all instances of a source class, or only for particular instances). For any
+extra information the receiver wants about the event (other than its type
+provided by the source's <code>getLastEventType</code> method) the receiver
+would need to cast the source and access information directly; this thus
+requires that
+
+<ul>
+<li>the source class anticipates the information that will be required and
+provides it appropriately (e.g., via an interface or get methods);
+<li>the receiver is expected to process the event on-receipt (and so the source
+need only store information on the latest event if it needs to do so).
+</ul>
+</p>
+
+<p>See the <a href="#exampleModels">example models</a> for more details.</p>
+
+<h4 id="domainEventsMessageClass">Message-Class Events</h4>
+
+<p>The basic relationships between classes is shown in figure 5 below:</p>
+
+<img src="diagrams/eventsArchitectureMessageBased.png"></img>
+
+<p><b>Figure 5</b>: <em>Overview of JSIT domain events architecture for
+message-class events, as a UML class diagram.</em></p>
+
+<p>Event source classes should define classes for each message (typically as
+static nested classes) and then implement the <code>EventMessageSource</code>
+interface. Whenever they create an event, they should call the
+<code>publish</code> method on the event manager passing the message object
+(optionally logging the event via its <code>toString</code> method).</p>
+
+<p>Event receivers should implement a receiving class per-message-type (via an
+appropriately-parameterised subclass of the abstract
+<code>EventMessageReceiver</code> class) and then register instances of these
+receiving classes with the event manager for the events they want to subscribe
+to (either for all instances of a message class, or only for instances from a
+particular source).</p>
+
+<div class="topLink"><a href="#">Top</a></div><br /><hr /><hr />
+
+<!-- *************************************************************************** -->
+
 <h3 id="repro">Run Reproducibility</h3>
+
+<div class="warning">The production of the settings file is currently
+<b>disabled</b> if running with Java 9+ because of an incompatibility with the
+XStream serialisation library used.</div>
 
 <p>As long as your model version file and model source paths file are in place,
 there is nothing else that <i>has</i> to be done (unless you are not using a
 helper library). Settings for the run will be produced in a
 <code>settings.xml</code> XML file in your outputs folder (in a run-specific
-sub-folder, along with your logs). This settings file includes:
+sub-folder, along with your logs).</p>
+
+<p>The settings file includes:
 
 <ul>
 
@@ -1222,15 +1373,15 @@ settings applied for this run (see the <a href="#stochControl">stochasticity
 control section</a>).</li>
 
 </ul>
+</p>
 
 <div class="sideNote">When running simulations via an IDE, you can sometimes get
 extra libraries added to the runtime classpath which you don't really want/need
 (e.g., JUnit libraries with Eclipse). These will affect the checksum, so check
 the settings file carefully (where it lists all libraries used).</div>
 
-In particular, the checksum can be used to check if two runs definitely used
-exactly the same runtime code.
-</p>
+<p>In particular, the checksum can be used to check if two runs definitely used
+exactly the same runtime code.</p>
 
 <p>There are also runtime checks as to whether the source code for the model has
 been changed from that 'registered' via version-control (which may mean this run
@@ -1409,84 +1560,6 @@ href="#repro">Run Reproducibility</a>) to determine if the total set of runtime
 code has changed from a previous run.</p>
 
 <div class="topLink"><a href="#">Top</a></div><br /><hr />
-
-<!-- *************************************************************************** -->
-
-<h3 id="stochControl">Test-Oriented Stochasticity Control</h3>
-
-<p>Each stochastic item in your simulation (e.g., a normal distribution or
-simple Bernoulli trial probability) is specified as an instance of a JSIT
-<code>AbstractStochasticItem</code> subclass. Typically all instances of a model
-component (for the same model run) will share an instance, though there may be
-cases where you want per-instance distributions. The actual runtime sampling is
-still done by the toolkit you are using; by using the JSIT 'wrappers', you gain
-a consistent API and, more importantly, the ability to collapse selected items
-to a single 'mid' value (typically the mean) for a run, which makes testing and
-model exploration significantly easier in many cases.</p>
-
-<p>The runtime control is done by supplying a <span class="term">stochasticity
-control file</span> in your inputs directory called
-<code>stochControl.properties</code>. A template is provided in the
-<code>config</code> directory of the JSIT distribution (with comments there
-detailing the format).</p>
-
-<p>Because some simulations may have multiple model runs in parallel (within the
-same JVM) this means that we <em>cannot</em> always assume that all instances of
-a model component (Java class) are part of the same model. Thus, stochastic
-items can be registered per-model-instance and stored/accessed via a <span
-class="term">stochastic accessor</span> (in a very similar way to how logging
-works for AnyLogic; see earlier). For the same reasons as with logging, AnyLogic
-models should use a different form of accessor to non-AnyLogic models.</p>
-
-<p>As well as standard distributions, JSIT also provides some useful classes for
-custom distributions and 'distribution lookups': a set of distributions (of the
-same type) keyed by a set of Java enumerations. The latter can be used, for
-example, to represent a lookup of death rates (Bernoulli distributions) by
-age-range and gender classifications.</p>
-
-<h4 id="stochControlNormal">Standard Process</h4>
-
-<p>Have a look at the <a
-href="https://github.com/sprossiter/JSIT_DemoMASON">MASON-based demo
-model</code></a>.</p>
-
-<h4 id=stochControlAnyLogic">AnyLogic Process</h4>
-
-<p>Have a look at the <a
-href="https://sourceforge.net/p/amdhealthsocialcaresim/">AnyLogic-based demo
-model</code></a>.</p>
-
-<div class="topLink"><a href="#">Top</a></div><br /><hr />
-
-<!-- *************************************************************************** -->
-
-<h3 id="domainEvents">Domain Events &amp; Event-Driven Separation</h3>
-
-<p>Models that want to use JSIT events should create an instance of
-<code>EventManager</code> from the JSIT core library. Model components should
-implement the JSIT <code>EventSource</code> interface if they produce JSIT
-events, and the <code>EventReceiver</code> interface if they receive them. (They
-can do both.)</p>
-
-<p>Components that want to receive events also need to register with the
-<code>EventManager</code> for the events they are interested in. There are two
-<code>register</code> methods: one to register for all events from a class
-(i.e., from all instances), where you pass the <code>Class</code> of the source;
-and one to register for events from a particular class instance, where you pass
-the specific <code>EventSource</code> instance.</p>
-
-<p>All domain events will be logged to a special events log file per run.</p>
-
-<p>The basic relationships between classes is show in figure 4 below:</p>
-
-<img src="diagrams/eventsArchitecture.png"></img>
-
-<p><b>Figure 4</b>: <em>Overview of JSIT domain events architecture, as a UML
-class diagram.</em></p>
-
-<p>See the <a href="#exampleModels">example models</a> for more details.</p>
-
-<div class="topLink"><a href="#">Top</a></div><br /><hr /><hr />
 
 <!-- *************************************************************************** -->
 
