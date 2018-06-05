@@ -67,6 +67,10 @@
 <li><a href="#stochControlAnyLogic">AnyLogic Process</a></li>
 </ul>
 <li><a href="#domainEvents">Domain Events &amp; Event-Driven Separation</a></li>
+<ul>
+<li><a href="#domainEventsMarker">Marker-Based Events</a></li>
+<li><a href="#domainEventsMessageClass">Message-Class Events</a></li>
+</ul>
 <li><a href="#repro">Run Reproducibility</a></li>
 <ul>
 <li><a href="#reproAnyLogic">AnyLogic (via helper library)</a></li>
@@ -109,8 +113,9 @@ allows for model components to be more easily de-coupled from each other
 and thus results provenance.</li>
 
 </ul>
+</p>
 
-JSIT also suggests some best-practice ways of splitting up your source code
+<p>JSIT also suggests some best-practice ways of splitting up your source code
 (separating simulation from experiments), though this is not required.</p>
 
 <div class="sideNote">Where this user guide uses the term 'framework', it is
@@ -243,7 +248,7 @@ model events which have occurred:
 useful human-readable detail in a log message), and then query the event source
 object to get the information they need (requiring those objects/agents to have
 the relevant information available, and the caller to know about these model
-classes). The markers are implemented as the event sources providing an
+classes). The markers are implemented as the event sources providing a
 source-class-specific enum and a method returning the enum that indicates the
 event alternative that just occurred. (A given model class may generate any
 number of alternative events.)</dd>
@@ -251,7 +256,7 @@ number of alternative events.)</dd>
 <dt>Message-Class Events</dt>
 
 <dd>Have messages (objects of event-source-specific message classes) sent to
-receivers which may contain either all required information (this isolating
+receivers which may contain either all required information (thus isolating
 receivers from anything other than the message classes), and/or contain
 references to model classes (or informational interfaces for them) to obtain
 further information.</dd>
@@ -792,6 +797,7 @@ ModelX
             commons-io-2.4.jar
             commons-lang-2.6.jar
             commons-logging-1.2.jar
+            commons-math3-3.6.1.jar
             jsit-core-0.2.jar
             logback-classic-1.1.2.jar
             logback-core-1.1.2.jar
@@ -1268,17 +1274,9 @@ model</code></a>.</p>
 <h3 id="domainEvents">Domain Events &amp; Event-Driven Separation</h3>
 
 <p>Models that want to use JSIT events should create an instance of
-<code>EventManager</code> from the JSIT core library. Model components should
-implement the JSIT <code>EventSource</code> interface if they produce JSIT
-events, and the <code>EventReceiver</code> interface if they receive them. (They
-can do both.)</p>
-
-<p>Components that want to receive events also need to register with the
-<code>EventManager</code> for the events they are interested in. There are two
-<code>register</code> methods: one to register for all events from a class
-(i.e., from all instances), where you pass the <code>Class</code> of the source;
-and one to register for events from a particular class instance, where you pass
-the specific <code>EventSource</code> instance.</p>
+<code>EventManager</code> from the JSIT core library. Model components can be
+event sources or event receivers (or both), the specifics depending on which
+events architecture you are using (see below).</p>
 
 <p>All domain events will be logged to a special events log file
 <code>modelEvents.log</code> per run (in the JSIT-specified output folder).</p>
