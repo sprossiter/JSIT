@@ -701,7 +701,7 @@ public abstract class ModelInitialiser {
      * Disable stochastic overrides (as provided by the stochasticity control file).
      * Must be called before registering any stochastic items to be effective.
      * 
-     * This allows JSIT users to return a stochasticity control file (used, for 
+     * This allows JSIT users to set up a stochasticity control file (used, for 
      * example, during testing) but not actually have it used in a 'normal' run.
      * 
      * @since 0.2
