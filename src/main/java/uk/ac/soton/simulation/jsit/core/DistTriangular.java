@@ -164,7 +164,10 @@ public class DistTriangular extends DistributionContinuous
 
     /**
      * Create an unregistered copy of this distribution.
+     * 
      * @since 0.2
+     * 
+     * @return The copy of this distribution.
      */
     @Override
     public Distribution createUnregisteredCopy() {

@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -133,6 +133,11 @@ public abstract class Sampler implements Serializable {
      * Triangular dist (mean (a + b + c) / 3)
      */
     protected abstract double sampleTriangular(double min, double mode, double max);
+    
+    /*
+     * Weibull dist (mean scale * gamma(1 + 1 / shape))
+     */
+    protected abstract double sampleWeibull(double shape, double scale);
 
 
     // ************************** Private Methods **************************************

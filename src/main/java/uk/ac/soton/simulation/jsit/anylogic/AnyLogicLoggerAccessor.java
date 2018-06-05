@@ -139,6 +139,8 @@ public class AnyLogicLoggerAccessor implements Serializable {
      * @param agentInModel Any Agent instance that is part of the model. This
      * method will actually search for the closest 'parent' MainModel_AnyLogic
      * instance, so passing that (if available directly) will speed up the call.
+     * 
+     * @return The relevant logger for this agent.
      */
     public AnyLogicLogger getLoggerForRun(Agent agentInModel) {
         

@@ -1,5 +1,5 @@
 /*  
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
     
     This file is part of JSIT.
 
@@ -86,6 +86,8 @@ public abstract class ModelVersioningAssistant {
      * libraries) for Java access to SVN functionality, rather than the pure Java
      * SVNKit library. This therefore requires that JavaHL is installed on the
      * user's machine (see the JSIT usage instructions).
+     * 
+     * @since 0.1
      */
     public static enum VersionControlSystem {
 
@@ -147,6 +149,8 @@ public abstract class ModelVersioningAssistant {
 
     /**
      * Entry point. Only used to commit model code.
+     * 
+     * @since 0.1
      * 
      * @param args
      * Command-line parameters. Should be COMMIT and the under-VC sim code path. The
@@ -218,6 +222,8 @@ public abstract class ModelVersioningAssistant {
      * Static factory method to create a model versioning assistant (of a suitable
      * VCS-specific subclass to this one). The <code>ModelVCS</code> setting in the
      * required model version file is used to determine what is needed.
+     * 
+     * @since 0.1
      * 
      * @param inputsBasePath
      * Path to the inputs directory. A modelPath.properties file should exist there
@@ -379,7 +385,8 @@ public abstract class ModelVersioningAssistant {
             }
             File currFile = new File(currPath);
             if (!currFile.exists()) {
-                return null;
+            	logger.warn("Classpath file " + currPath + " does not exist; ignoring");
+            	continue;
             }
             logger.trace("Extracted " + currPath + " from path");
             pathFiles.add(currFile);
@@ -446,13 +453,21 @@ public abstract class ModelVersioningAssistant {
     // ********************* Public Instance Methods ***********************************
 
     /**
-     * Returns the last commit ID (where this ID is in a suitable VCS-specific form),
+     * Abstract method to return the last commit ID (where this ID is in a suitable VCS-specific form),
      * as in the model version file.
+     * 
+     * @since 0.1
+     * 
+     * @return The last commit ID.
      */
     public abstract String getLastCommitID();
 
     /**
      * Returns the user-assigned model name (as in the model version file).
+     * 
+     * @since 0.1
+     * 
+     * @return The user model name.
      */
     public String getUserModelName() {
 
@@ -462,6 +477,10 @@ public abstract class ModelVersioningAssistant {
 
     /**
      * Returns string identifying the VCS being used (as in the model version file).
+     * 
+     * @since 0.1
+     * 
+     * @return The VCS-identifying string.
      */
     public String getModelVCS() {
 
@@ -472,6 +491,10 @@ public abstract class ModelVersioningAssistant {
     /**
      * Returns a URL string for the model code's VCS repository location (derived from
      * that for the model version file in the model version file).
+     * 
+     * @since 0.1
+     * 
+     * @return URL string for the model's repository location.
      */
     public String getModelCommittedURL() {
 
@@ -487,6 +510,8 @@ public abstract class ModelVersioningAssistant {
      * Returns whether the model's sim code has local modifications from the
      * version checksummed at commit time (as reported in the model
      * version file; this includes not-in-VCS files in those folders).
+     * 
+     * @since 0.1
      * 
      * @return A ModificationStatus value as used by RunEnvironmentSettings (and included
      * in the model settings file).
@@ -521,7 +546,11 @@ public abstract class ModelVersioningAssistant {
     }
 
     /**
-     * Returns the user-set model version (as in the model version file). 
+     * Returns the user-set model version (as in the model version file).
+     * 
+     * @since 0.1
+     * 
+     * @return The user-set model version string.
      */
     public String getUserModelVersion() {
 

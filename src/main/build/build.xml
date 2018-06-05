@@ -3,7 +3,7 @@
     Author: Stuart Rossiter
 	
     ****************************************************************************	
-    Copyright 2015 University of Southampton
+    Copyright 2018 University of Southampton, Stuart Rossiter
 	
     This file is part of JSIT.
 
@@ -26,10 +26,6 @@
 
     <!-- =================CONFIG PROPERTIES================= -->
 
-    <!--
-        Uncomment if using a Java 1.8 JDK
-    <property name="build.compiler" value="javac1.8" />
-    -->
     <property name="build.compiler" value="javac1.8" />
 
     <!--
@@ -55,7 +51,7 @@
 
     <!-- General build variables -->
 
-    <property name="jsit.ver" value="0.2-SNAPSHOT" />
+    <property name="jsit.ver" value="0.2" />
     <property name="build.area.dist" value="buildOutputs/dist/JSIT-${jsit.ver}" />
     <property name="build.area.ghpages" value="buildOutputs/gh-pages/JSIT-${jsit.ver}" />
 
@@ -71,11 +67,14 @@
     <property name="libver.commons-configuration" value="1.10" />
     <property name="libver.commons-lang" value="2.6" />
     <property name="libver.commons-logging" value="1.2" />
-    <property name="libver.anylogic" value="7.1.2" />
-
+	<property name="libver.commons-math" value="3.6.1" />
     <property name="libver.libsvn.V6" value="1.6.23" />
     <!-- CollabNet and SlikSVN now at v1.8.11 (and WANDisco for x32 only) -->
     <property name="libver.libsvn.V8" value="1.8.11" />
+	
+	<!-- Javadoc generation extra dependency versions -->
+	
+	<property name="libver.querydsl-sql" value="3.6.3" />
 
     <!-- Build and runtime-additions classpaths -->
 
@@ -96,10 +95,13 @@
         <include name="slf4j-api-${libver.slf4j}.jar" />
         <include name="xstream-${libver.xstream}.jar" />
         <include name="commons-lang-${libver.commons-lang}.jar" />
+    	<include name="commons-math3-${libver.commons-math}.jar" />
+    	<!-- Javadoc-generation-only dependency -->
+    	<include name="querydsl-sql-${libver.querydsl-sql}.jar" />
     </fileset>
 
     <fileset id="build.libs.proprietary" dir="lib">
-        <include name="com.anylogic.engine-${libver.anylogic}.jar" />
+        <include name="com.anylogic.engine.jar" />
     </fileset>
 
     <fileset id="dist.libs.build.additions.OSS" dir="lib">
@@ -117,6 +119,7 @@
         <include name="slf4j-api-${libver.slf4j}_*" />
         <include name="xstream-${libver.xstream}_*" />
         <include name="commons-lang-${libver.commons-lang}_*" />
+    	<include name="commons-math3-${libver.commons-math}_*" />
     </fileset>
 
     <union id="dist.libs">
@@ -126,16 +129,16 @@
 
     <!-- =================MAIN USER TARGETS================= -->
 
-    <target name="genSourceREADME" description="Generate source README.rst from template">
-        <copy file="README_Template.rst" tofile="README.rst" overwrite="true">
+    <target name="genSourceREADME" description="Generate source README.md from template">
+        <copy file="README_Template.md" tofile="README.md" overwrite="true">
             <filterset>
                 <filter token="RESOURCES_PATH" value="src/main/resources" />
                 <filter token="USER_GUIDE_PATH"
                         value="http://sprossiter.github.io/JSIT" />
             </filterset>
         </copy>
-        <exec dir="." executable="rst2html" output="README.htm" failonerror="true">
-            <arg value="README.rst" />
+        <exec dir="." executable="pandoc" output="README.htm" failonerror="true">
+            <arg line="-f markdown -t html README.md" />
         </exec>
     </target>
 
@@ -185,38 +188,42 @@
              Moronically, exec doesn't use the dir attribute for the output path so that
              needs expressing explicitly -->
 
-        <copy file="README_Template.rst" tofile="${build.area.dist}/README.rst" overwrite="false">
+        <copy file="README_Template.md" tofile="${build.area.dist}/README.md" overwrite="false">
             <filterset>
                 <filter token="RESOURCES_PATH" value="resources" />
                 <filter token="USER_GUIDE_PATH" value="resources/docs/userGuide.htm" />
             </filterset>
         </copy>
-        <exec dir="${build.area.dist}" resolveexecutable="true" executable="rst2html"
+        <exec dir="${build.area.dist}" resolveexecutable="true" executable="pandoc"
               output="${build.area.dist}/README.htm" failonerror="true">
-            <arg value="README.rst" />
+        	<arg line="-f markdown -t html README.md" />
         </exec>
 
-        <!-- Compile source code -->
+        <!-- Compile source code and copy it for inclusion in JAR later -->
 
         <javac srcdir="src/main/java" destdir="buildTemp/bin" source="1.6" target="1.6"
                includeantruntime="false">
             <classpath refid="build.classpath" />
         </javac>
+    	
+    	<copy todir="buildTemp/bin">
+    		<fileset dir="src/main/java" />
+    	</copy>
 
         <!-- TODO: Add all automated tests -->
 
-        <!-- Create JSIT JARs (with renamed license files) and Javadoc -->
+        <!-- Create JSIT JARs (with renamed license files, including source) and Javadoc -->
+    	
+    	<jar basedir="buildTemp/bin"
+    	     destfile="${build.area.dist}/lib/jsit-core-${jsit.ver}.jar"
+    		 includes="uk/ac/soton/simulation/jsit/core/*"
+    	     compress="true" encoding="UTF-8" update="true" />
 
-        <jar basedir="buildTemp/bin"
-             destfile="${build.area.dist}/lib/jsit-core-${jsit.ver}.jar"
-             includes="uk/ac/soton/simulation/jsit/core/*.class"
-             compress="true" encoding="UTF-8" update="true" />
-
-        <jar basedir="buildTemp/bin"
-             destfile="${build.area.dist}/lib/jsit-anylogic-${jsit.ver}.jar"
-             includes="uk/ac/soton/simulation/jsit/anylogic/*.class"
-             compress="true" encoding="UTF-8" update="true" />
-
+    	<jar basedir="buildTemp/bin"
+    	     destfile="${build.area.dist}/lib/jsit-anylogic-${jsit.ver}.jar"
+    		 includes="uk/ac/soton/simulation/jsit/anylogic/*"
+    	     compress="true" encoding="UTF-8" update="true" />
+    	
         <copy file="lgpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE.txt" />
         <copy file="gpl.txt" tofile="${build.area.dist}/lib/jsit-${jsit.ver}_LICENSE_GPL.txt" />
 
@@ -297,7 +304,7 @@
 		     same license as core XStream, so reuse the license from the distribution which
 		     also includes them -->
 
-        <get src="https://nexus.codehaus.org/content/repositories/releases/com/thoughtworks/xstream/xstream-distribution/${libver.xstream}/xstream-distribution-${libver.xstream}-bin.zip"
+        <get src="http://repo1.maven.org/maven2/com/thoughtworks/xstream/xstream-distribution/${libver.xstream}/xstream-distribution-${libver.xstream}-bin.zip"
 			 dest="buildTemp/libDists/xstream-${libver.xstream}.zip"
 			 skipexisting="true"
 			 verbose="true" />
@@ -324,6 +331,7 @@
 
         <antcall target="getApacheCommonsDependency" inheritAll="false">
             <param name="commons.subproj" value="codec" />
+        	<param name="commons.subproj.bin.prefix" value="codec" />
             <param name="libver.commons.subproj" value="${libver.commons-codec}" />
         </antcall>
 
@@ -331,6 +339,7 @@
 
         <antcall target="getApacheCommonsDependency" inheritAll="false">
             <param name="commons.subproj" value="io" />
+        	<param name="commons.subproj.bin.prefix" value="io" />
             <param name="libver.commons.subproj" value="${libver.commons-io}" />
         </antcall>
 
@@ -338,17 +347,28 @@
 
         <antcall target="getApacheCommonsDependency" inheritAll="false">
             <param name="commons.subproj" value="configuration" />
+        	<param name="commons.subproj.bin.prefix" value="configuration" />
             <param name="libver.commons.subproj" value="${libver.commons-configuration}" />
         </antcall>
 
         <antcall target="getApacheCommonsDependency" inheritAll="false">
             <param name="commons.subproj" value="lang" />
+        	<param name="commons.subproj.bin.prefix" value="lang" />
             <param name="libver.commons.subproj" value="${libver.commons-lang}" />
         </antcall>
 
         <antcall target="getApacheCommonsDependency" inheritAll="false">
             <param name="commons.subproj" value="logging" />
+        	<param name="commons.subproj.bin.prefix" value="logging" />
             <param name="libver.commons.subproj" value="${libver.commons-logging}" />
+        </antcall>
+    	
+    	<!-- Commons Math -->
+
+        <antcall target="getApacheCommonsDependency" inheritAll="false">
+            <param name="commons.subproj" value="math" />
+        	<param name="commons.subproj.bin.prefix" value="math3" />
+            <param name="libver.commons.subproj" value="${libver.commons-math}" />
         </antcall>
 
     </target>
@@ -406,24 +426,27 @@
 
     <target name="getApacheCommonsDependency">
 
-        <get src="http://www.mirrorservice.org/sites/ftp.apache.org/commons/${commons.subproj}/binaries/commons-${commons.subproj}-${libver.commons.subproj}-bin.zip"
-			 dest="buildTemp/libDists/commons-${commons.subproj}-${libver.commons.subproj}.zip"
+        <!-- Mirrored path is as below but only includes latest releases so use archive
+             http://www.mirrorservice.org/sites/ftp.apache.org/commons/${commons.subproj}/binaries/commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}-bin.zip -->
+
+        <get src="http://archive.apache.org/dist/commons/${commons.subproj}/binaries/commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}-bin.zip"
+			 dest="buildTemp/libDists/commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}.zip"
 		     skipexisting="true"
 			 verbose="true" />
 
-        <unzip src="buildTemp/libDists/commons-${commons.subproj}-${libver.commons.subproj}.zip"
+        <unzip src="buildTemp/libDists/commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}.zip"
 			   dest="lib"
 			   overwrite="false">
             <patternset>
-                <include name="commons-${commons.subproj}-${libver.commons.subproj}/LICENSE.txt" />
-                <include name="commons-${commons.subproj}-${libver.commons.subproj}/NOTICE.txt" />
-                <include name="commons-${commons.subproj}-${libver.commons.subproj}/commons-${commons.subproj}-${libver.commons.subproj}.jar" />
+                <include name="commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}/LICENSE.txt" />
+                <include name="commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}/NOTICE.txt" />
+                <include name="commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}/commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}.jar" />
             </patternset>
             <chainedmapper>
                 <flattenmapper />
                 <mapper>
-                    <globmapper from="LICENSE.txt" to="commons-${commons.subproj}-${libver.commons.subproj}_LICENSE.txt" />
-                    <globmapper from="NOTICE.txt" to="commons-${commons.subproj}-${libver.commons.subproj}_NOTICE.txt" />
+                    <globmapper from="LICENSE.txt" to="commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}_LICENSE.txt" />
+                    <globmapper from="NOTICE.txt" to="commons-${commons.subproj.bin.prefix}-${libver.commons.subproj}_NOTICE.txt" />
                     <globmapper from="*.jar" to="*.jar" />
                 </mapper>
             </chainedmapper>
